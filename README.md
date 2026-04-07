@@ -147,6 +147,7 @@ If you want to be the person your team calls when things are on fire — and the
 | 21 | [Firebase Console Mastery](./part-5-deployment-operations/21-firebase.md) | Intermediate | Crashlytics, Analytics (events, funnels, retention), Performance Monitoring, Remote Config, Cloud Messaging, App Distribution |
 | 22 | [Security & Data Protection](./part-5-deployment-operations/22-security.md) | Intermediate | Secure storage, API key protection, certificate pinning, biometrics, OWASP Mobile Top 10, OAuth2 PKCE, token management, code obfuscation |
 | 23 | [Mobile Metrics That Matter](./part-5-deployment-operations/23-metrics.md) | Intermediate | Cold start time, TTI, FPS/jank, memory usage, network latency, app size, Play Console vitals, App Store Connect, Datadog RUM |
+| 24 | [Payments & Money Handling](./part-5-deployment-operations/24-payments.md) | Inter→Adv | Stripe (React Native + Next.js), PaymentIntents, subscriptions, Apple Pay, Google Pay, In-App Purchases, RevenueCat, webhooks, PCI compliance, testing |
 
 > **Narrative:** How to monitor (Ch 20) → Firebase deep dive (Ch 21) → How to secure (Ch 22) → What to measure (Ch 23).
 

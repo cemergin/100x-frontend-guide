@@ -1,0 +1,1148 @@
+# ============================================================================
+# The 100x Frontend Architect Guide — Interactive Course
+# ============================================================================
+# Compatible with: tech-skill-builder plugin for Claude Code
+# Running project: TicketFlow — event discovery and ticketing app
+#   Stack: React Native (Expo) + Next.js web dashboard
+#   Deploy: EAS (mobile) + Vercel (web)
+# ============================================================================
+
+course:
+  title: "The 100x Frontend Architect Guide"
+  subtitle: "JavaScript, React, React Native, Expo, Vercel & Modern Frontend Mastery"
+  version: "1.0.0"
+  updated: "2026-04-07"
+  running_project: "TicketFlow"
+  running_project_description: >
+    TicketFlow is an event discovery and ticketing app — think Resident Advisor meets
+    Eventbrite. Built with React Native (Expo) for mobile and a Next.js web dashboard.
+    It supports event browsing, ticket purchasing (Stripe), social features, real-time
+    notifications, and venue discovery. Deployed via EAS (mobile) and Vercel (web)
+    from a Turborepo monorepo.
+
+tutoring_defaults:
+  style: socratic
+  pace: adaptive
+  feedback: immediate
+  scaffolding_decay: true
+  exercise_types:
+    - "🤔 Reflect"
+    - "🔍 Explore"
+    - "🛠️ Build"
+    - "🐛 Debug"
+    - "📐 Design"
+    - "💡 Insight"
+    - "🚀 Deploy"
+    - "📊 Observe"
+  tiers:
+    - name: "🟢 Core"
+      description: "Essential knowledge every frontend engineer needs"
+    - name: "🟡 Deep Dive"
+      description: "Intermediate patterns for scaling apps and teams"
+    - name: "🔴 Expert"
+      description: "Advanced architecture and production mastery"
+  loops:
+    - name: "Loop 1: Foundation"
+      modules: "L1-M01 to L1-M20"
+      scaffolding: "Heavy — starter code, guided steps, explanations"
+      ticketflow_arc: "Empty folder → simple Expo app with basic screens, navigation, and first EAS build"
+    - name: "Loop 2: Practice"
+      modules: "L2-M01 to L2-M20"
+      scaffolding: "Moderate — direction given, implementation is on the learner"
+      ticketflow_arc: "Basic app → full-featured app with API integration, state management, testing, CI/CD, and monitoring"
+    - name: "Loop 3: Mastery"
+      modules: "L3-M01 to L3-M20"
+      scaffolding: "Minimal — learner-driven, architect-level decisions"
+      ticketflow_arc: "Single app → production-ready monorepo with web dashboard, design system, Vercel deployment, AI features, and operational readiness"
+
+# ============================================================================
+# LOOP 1: FOUNDATION (L1-M01 to L1-M20)
+# Build the mental model. Heavy scaffolding.
+# TicketFlow arc: empty folder → simple Expo app → basic screens → first EAS build
+# ============================================================================
+
+modules:
+
+  # --------------------------------------------------------------------------
+  # L1-M01 to L1-M05: JavaScript & TypeScript Foundations
+  # --------------------------------------------------------------------------
+
+  - id: L1-M01
+    title: "JavaScript Engine — Execution Context & Call Stack"
+    tier: "🟢 Core"
+    duration: "60 min"
+    source_chapters: [0]
+    ticketflow: "No app yet — we are building the mental model of how JS runs under the hood"
+    summary: "Understand how JavaScript actually executes: execution contexts, the call stack, hoisting, and the thread of execution. This is the foundation everything else builds on."
+    exercises:
+      - type: "🔍 Explore"
+        description: "Step through a 10-line JS snippet and draw the call stack at each line — predict variable values before running"
+      - type: "🤔 Reflect"
+        description: "Why does JavaScript use a single-threaded model? What are the trade-offs vs multi-threaded languages?"
+      - type: "🛠️ Build"
+        description: "Write a function that demonstrates closure by creating a private counter — explain what the backpack/COVE contains"
+    runs_locally: true
+    prereqs: []
+
+  - id: L1-M02
+    title: "Async JavaScript — Event Loop, Promises & Microtasks"
+    tier: "🟢 Core"
+    duration: "75 min"
+    source_chapters: [0]
+    ticketflow: "No app yet — mastering async patterns needed for every API call TicketFlow will make"
+    summary: "Master the event loop, callback queue, microtask queue, promises, and async/await. Predict execution order in complex async scenarios."
+    exercises:
+      - type: "🐛 Debug"
+        description: "Given 5 async code snippets with mixed setTimeout, Promise.then, and async/await — predict the exact console.log order, then verify"
+      - type: "🛠️ Build"
+        description: "Implement a retry function with exponential backoff using async/await — this pattern will power TicketFlow's API calls"
+      - type: "💡 Insight"
+        description: "Explain why await in a for-loop is different from Promise.all — when would TicketFlow use each pattern?"
+    runs_locally: true
+    prereqs: [L1-M01]
+
+  - id: L1-M03
+    title: "UI Development — DOM, Data Binding & Virtual DOM"
+    tier: "🟢 Core"
+    duration: "60 min"
+    source_chapters: ["0b"]
+    ticketflow: "No app yet — understanding why React exists and what problem it solves"
+    summary: "Learn how the DOM works as a C++ data structure, why direct DOM manipulation doesn't scale, how data binding evolved, and how the virtual DOM solves UI composition."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Build a tiny todo list with vanilla JS and direct DOM manipulation — feel the pain of imperative UI updates"
+      - type: "🔍 Explore"
+        description: "Implement a minimal virtual DOM diff algorithm (createElement, diff, patch) in under 50 lines"
+      - type: "🤔 Reflect"
+        description: "Why did React win over two-way data binding frameworks? What does one-way data flow buy you at scale?"
+    runs_locally: true
+    prereqs: [L1-M01]
+
+  - id: L1-M04
+    title: "React from First Principles — Components, Props & State"
+    tier: "🟢 Core"
+    duration: "75 min"
+    source_chapters: ["0c"]
+    ticketflow: "No app yet — learning the React component model that TicketFlow is built on"
+    summary: "Understand JSX compilation, component composition, props vs state, and the unidirectional data flow that makes React predictable."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Create a BalanceCard component that accepts amount and currency as props and formats them — this becomes a real TicketFlow component later"
+      - type: "🔍 Explore"
+        description: "Use the Babel REPL to see what JSX compiles to — explain the relationship between JSX, createElement, and the virtual DOM"
+      - type: "🤔 Reflect"
+        description: "Why are props read-only? What would break if a child component could mutate its parent's props?"
+    runs_locally: true
+    prereqs: [L1-M03]
+
+  - id: L1-M05
+    title: "React Hooks — useState, useEffect, useRef & Custom Hooks"
+    tier: "🟢 Core"
+    duration: "75 min"
+    source_chapters: ["0c"]
+    ticketflow: "No app yet — mastering hooks that will drive every screen in TicketFlow"
+    summary: "Deep dive into the hooks mental model: useState for state, useEffect for synchronization, useRef for escape hatches, and custom hooks for reuse."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Build a useDebounce hook and a useLocalStorage hook — both will be used in TicketFlow's search and preferences"
+      - type: "🐛 Debug"
+        description: "Fix three broken useEffect examples: missing dependencies, infinite loops, and stale closures"
+      - type: "💡 Insight"
+        description: "Explain the rules of hooks — why can't you call hooks inside conditions or loops? What does this tell you about React's internal data structure?"
+    runs_locally: true
+    prereqs: [L1-M04]
+
+  # --------------------------------------------------------------------------
+  # L1-M06 to L1-M08: TypeScript Essentials
+  # --------------------------------------------------------------------------
+
+  - id: L1-M06
+    title: "TypeScript Essentials — Types, Inference & Unions"
+    tier: "🟢 Core"
+    duration: "60 min"
+    source_chapters: ["0d"]
+    ticketflow: "No app yet — learning the type system that will catch bugs before they reach TicketFlow users"
+    summary: "Learn TypeScript's type system from the ground up: primitives, type inference, union and intersection types, literal types, and type narrowing."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Type a Transaction interface for TicketFlow with amount, currency, status (union of literals), sender, and recipient"
+      - type: "🔍 Explore"
+        description: "Use the TypeScript Playground to experiment with type narrowing — how does TS know which branch of a union you're in?"
+      - type: "🐛 Debug"
+        description: "Fix 5 type errors in a provided code snippet without using 'any' — each error teaches a different TS concept"
+    runs_locally: true
+    prereqs: [L1-M05]
+
+  - id: L1-M07
+    title: "TypeScript Generics & Utility Types"
+    tier: "🟡 Deep Dive"
+    duration: "60 min"
+    source_chapters: ["0d"]
+    ticketflow: "No app yet — building reusable type patterns for TicketFlow's data layer"
+    summary: "Master generics, constraints, and built-in utility types (Partial, Pick, Omit, Record). Build type-safe abstractions."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Create a generic ApiResponse<T> type that wraps data, error, and loading states — this becomes TicketFlow's standard API response shape"
+      - type: "🔍 Explore"
+        description: "Implement Pick and Omit from scratch using mapped types and keyof — understand how utility types actually work"
+      - type: "🤔 Reflect"
+        description: "When should you use generics vs union types vs function overloads? Give a TicketFlow example for each."
+    runs_locally: true
+    prereqs: [L1-M06]
+
+  - id: L1-M08
+    title: "TypeScript in React — Typing Components & Hooks"
+    tier: "🟢 Core"
+    duration: "60 min"
+    source_chapters: ["0c", "0d"]
+    ticketflow: "No app yet — connecting TypeScript knowledge to React patterns"
+    summary: "Type React components, props, hooks, events, and refs. Learn the React TypeScript patterns you'll use every day."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Type a generic List<T> component that renders any array of items with a renderItem prop — use it for TicketFlow's transaction list"
+      - type: "🐛 Debug"
+        description: "Fix type errors in a form component with onChange handlers, refs, and conditional rendering"
+      - type: "💡 Insight"
+        description: "Explain the difference between React.FC<Props> and function Component(props: Props) — which is preferred and why?"
+    runs_locally: true
+    prereqs: [L1-M06, L1-M05]
+
+  # --------------------------------------------------------------------------
+  # L1-M09 to L1-M13: Expo & React Native Setup
+  # --------------------------------------------------------------------------
+
+  - id: L1-M09
+    title: "Expo Setup — Creating the TicketFlow App"
+    tier: "🟢 Core"
+    duration: "60 min"
+    source_chapters: [5]
+    ticketflow: "Fresh Expo project initialized with TypeScript template — app runs on simulator showing default Expo screen"
+    summary: "Initialize a real Expo project, understand the file structure, run it on a simulator/device, and learn what Continuous Native Generation (CNG) means."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Run 'npx create-expo-app TicketFlow --template tabs' and get it running on your simulator — explore every file in the generated project"
+      - type: "🔍 Explore"
+        description: "Compare the Expo project structure to a bare React Native project — what files does CNG eliminate and why?"
+      - type: "🤔 Reflect"
+        description: "What is the trade-off between managed Expo and bare React Native? When would TicketFlow need to eject?"
+    runs_locally: true
+    prereqs: [L1-M08]
+
+  - id: L1-M10
+    title: "React Native Internals — How Your Code Becomes Pixels"
+    tier: "🟡 Deep Dive"
+    duration: "75 min"
+    source_chapters: [1]
+    ticketflow: "Same Expo project — now you understand what happens between your JSX and the native UI"
+    summary: "Understand the New Architecture: JSI, Fabric, TurboModules, and how JS communicates with native. This mental model prevents entire categories of bugs."
+    exercises:
+      - type: "🔍 Explore"
+        description: "Trace what happens when you write <View style={{flex: 1}}> — from JSX through reconciliation to a native UIView/Android.View"
+      - type: "🤔 Reflect"
+        description: "Why did React Native move from the Bridge to JSI? What performance problems did the old architecture cause?"
+      - type: "💡 Insight"
+        description: "Draw a diagram of the three threads (JS, UI, Shadow/Background) and explain which thread runs your event handlers vs layout calculations"
+    runs_locally: true
+    prereqs: [L1-M09]
+
+  - id: L1-M11
+    title: "Core Components & Layout with Flexbox"
+    tier: "🟢 Core"
+    duration: "60 min"
+    source_chapters: [8]
+    ticketflow: "TicketFlow has a styled home screen with a balance display, action buttons row, and placeholder transaction list"
+    summary: "Master React Native's core components (View, Text, ScrollView, Image, Pressable) and the Flexbox layout model on mobile."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Build TicketFlow's home screen layout: balance card at top, row of action buttons (Send, Request, Scan), and a transaction list placeholder below"
+      - type: "🐛 Debug"
+        description: "Fix a layout that looks correct on iPhone 15 but breaks on smaller screens — learn about flex ratios and Dimensions"
+      - type: "🔍 Explore"
+        description: "Compare Flexbox in React Native vs CSS Flexbox — identify the three key differences (defaults, units, no grid)"
+    runs_locally: true
+    prereqs: [L1-M09]
+
+  - id: L1-M12
+    title: "Styling Approaches — NativeWind & StyleSheet"
+    tier: "🟢 Core"
+    duration: "60 min"
+    source_chapters: [8]
+    ticketflow: "TicketFlow home screen restyled with NativeWind/Tailwind classes, consistent color palette and spacing"
+    summary: "Set up NativeWind (Tailwind for React Native), understand StyleSheet.create, and establish TicketFlow's visual identity."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Install NativeWind and restyle the TicketFlow home screen using Tailwind classes — set up a custom color palette in tailwind.config.js"
+      - type: "🔍 Explore"
+        description: "Compare StyleSheet.create vs NativeWind vs inline styles — measure if there's a performance difference using the React DevTools Profiler"
+      - type: "📐 Design"
+        description: "Create a spacing and color token system for TicketFlow — define primary, secondary, success, error, and neutral scales"
+    runs_locally: true
+    prereqs: [L1-M11]
+
+  - id: L1-M13
+    title: "Navigation with Expo Router"
+    tier: "🟢 Core"
+    duration: "75 min"
+    source_chapters: [7]
+    ticketflow: "TicketFlow has tab navigation (Home, Send, Activity, Profile) with a stack navigator for transaction details"
+    summary: "Set up file-based routing with Expo Router. Create tab navigation, stack navigation, and understand deep linking."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Set up TicketFlow's navigation: tabs for Home/Send/Activity/Profile, stack navigator for transaction details, and a modal for QR scanning"
+      - type: "🔍 Explore"
+        description: "Add a deep link that opens a specific transaction — test with 'npx uri-scheme open ticketflow://transaction/123'"
+      - type: "🐛 Debug"
+        description: "Fix a navigation issue where the back button doesn't work correctly after navigating from a deep link"
+    runs_locally: true
+    prereqs: [L1-M11]
+
+  # --------------------------------------------------------------------------
+  # L1-M14 to L1-M17: Building Screens & Basic State
+  # --------------------------------------------------------------------------
+
+  - id: L1-M14
+    title: "Building the Send Money Screen"
+    tier: "🟢 Core"
+    duration: "75 min"
+    source_chapters: ["0c", 8]
+    ticketflow: "TicketFlow has a working Send Money screen with contact picker, amount input with currency formatting, and confirmation step"
+    summary: "Build a multi-step form screen using React state, controlled inputs, and basic validation. Practice component composition."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Build the Send Money flow: contact selection → amount entry with live currency formatting → confirmation screen → success animation"
+      - type: "📐 Design"
+        description: "Design the component hierarchy for the Send flow — which components own state vs receive props?"
+      - type: "🐛 Debug"
+        description: "Fix a bug where typing fast in the amount field causes the cursor to jump — understand controlled vs uncontrolled inputs"
+    runs_locally: true
+    prereqs: [L1-M12, L1-M13]
+
+  - id: L1-M15
+    title: "Lists & FlatList Performance"
+    tier: "🟢 Core"
+    duration: "60 min"
+    source_chapters: [13]
+    ticketflow: "TicketFlow's Activity tab shows a performant scrollable transaction history with pull-to-refresh"
+    summary: "Replace ScrollView with FlatList for TicketFlow's transaction list. Understand virtualization, keyExtractor, and basic list optimization."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Build the Activity tab with FlatList: render 100+ mock transactions with date headers (SectionList), pull-to-refresh, and a loading footer"
+      - type: "🔍 Explore"
+        description: "Add console.log to renderItem and scroll — observe how virtualization works by seeing which items mount/unmount"
+      - type: "💡 Insight"
+        description: "Why does FlatList need keyExtractor? What happens to performance if you use array index as the key?"
+    runs_locally: true
+    prereqs: [L1-M14]
+
+  - id: L1-M16
+    title: "Local State Management with useState & useReducer"
+    tier: "🟢 Core"
+    duration: "60 min"
+    source_chapters: [9]
+    ticketflow: "TicketFlow screens use well-structured local state — form state in Send, filter state in Activity, user preferences in Profile"
+    summary: "Learn when to use useState vs useReducer. Manage form state, filter state, and UI state across TicketFlow's screens."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Refactor the Send Money form to use useReducer — handle amount, recipient, note, and validation state in a single reducer"
+      - type: "🤔 Reflect"
+        description: "Map TicketFlow's state to three categories: server state (transactions), client state (UI filters), form state (send flow). Why does this separation matter?"
+      - type: "🐛 Debug"
+        description: "Fix a stale state bug in the Activity filter — toggling filters rapidly shows wrong results due to closure over old state"
+    runs_locally: true
+    prereqs: [L1-M15]
+
+  - id: L1-M17
+    title: "Context API — Sharing State Across Screens"
+    tier: "🟢 Core"
+    duration: "60 min"
+    source_chapters: [9, "0c"]
+    ticketflow: "TicketFlow has a theme context (light/dark mode) and an auth context (logged-in user info) shared across all screens"
+    summary: "Use React Context for truly global state: authentication, theme, and app-wide settings. Understand when Context is the right tool vs when it isn't."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Create an AuthContext and ThemeContext for TicketFlow — wrap the app, consume in Profile and every screen's header"
+      - type: "🔍 Explore"
+        description: "Add React DevTools Profiler and toggle the theme — observe which components re-render. How many re-renders does a context change cause?"
+      - type: "🤔 Reflect"
+        description: "Why is putting everything in Context a bad idea? What's the performance implication of updating a Context value that 50 components consume?"
+    runs_locally: true
+    prereqs: [L1-M16]
+
+  # --------------------------------------------------------------------------
+  # L1-M18 to L1-M20: First Build & Deploy
+  # --------------------------------------------------------------------------
+
+  - id: L1-M18
+    title: "Images, Icons & Assets"
+    tier: "🟢 Core"
+    duration: "45 min"
+    source_chapters: [8, 5]
+    ticketflow: "TicketFlow has a polished look with app icon, splash screen, vector icons for tabs, and optimized images"
+    summary: "Set up app icons, splash screens, and learn image handling in Expo. Use expo-image for performance and vector icons for UI."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Add TicketFlow's app icon, configure the splash screen in app.json, set up @expo/vector-icons for tab icons, and use expo-image for user avatars"
+      - type: "🔍 Explore"
+        description: "Compare Image vs expo-image — load a list of 20 avatar images and observe memory usage and caching behavior"
+      - type: "📐 Design"
+        description: "Create TicketFlow's icon set requirements — which icons do you need for tabs, actions, and status indicators?"
+    runs_locally: true
+    prereqs: [L1-M13]
+
+  - id: L1-M19
+    title: "App Configuration & Environment Setup"
+    tier: "🟢 Core"
+    duration: "45 min"
+    source_chapters: [5, 6]
+    ticketflow: "TicketFlow has proper app.config.ts with environment-based configuration for dev/staging/production"
+    summary: "Configure app.config.ts with dynamic values, set up environment variables, and understand Expo's config resolution."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Convert app.json to app.config.ts — add environment-based API URLs, app name suffixes (TicketFlow Dev), and bundle identifiers"
+      - type: "🔍 Explore"
+        description: "Run 'npx expo config' in different environments and compare the resolved output — understand how config plugins modify the native config"
+      - type: "💡 Insight"
+        description: "Why should API keys never go in app.config.ts for production? Where should they live instead?"
+    runs_locally: true
+    prereqs: [L1-M18]
+
+  - id: L1-M20
+    title: "First EAS Build — From Code to Binary"
+    tier: "🟢 Core"
+    duration: "90 min"
+    source_chapters: [6]
+    ticketflow: "TicketFlow has its first development build running on a real device via EAS Build"
+    summary: "Set up EAS, configure build profiles, create your first development build, and install it on a device. This is the moment TicketFlow becomes a real app."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Run 'eas init', configure eas.json with development/preview/production profiles, and trigger your first development build"
+      - type: "🚀 Deploy"
+        description: "Install the development build on your physical device — test that hot reloading works over your local network"
+      - type: "🤔 Reflect"
+        description: "What is the difference between Expo Go, a development build, and a production build? When do you need each?"
+    runs_locally: true
+    prereqs: [L1-M19]
+
+  # ============================================================================
+  # LOOP 2: PRACTICE (L2-M01 to L2-M20)
+  # Scale and build features. Moderate scaffolding.
+  # TicketFlow arc: basic app → full-featured with API, monitoring, CI/CD
+  # ============================================================================
+
+  # --------------------------------------------------------------------------
+  # L2-M01 to L2-M05: State Management & Data Fetching
+  # --------------------------------------------------------------------------
+
+  - id: L2-M01
+    title: "Zustand — Client State Done Right"
+    tier: "🟢 Core"
+    duration: "60 min"
+    source_chapters: [9]
+    ticketflow: "TicketFlow uses Zustand stores for client state: user preferences, UI state, and onboarding progress"
+    summary: "Replace Context-based state with Zustand. Learn store creation, selectors, persistence with MMKV, and why Zustand beats Context for client state."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Create a usePreferencesStore (currency, language, biometrics) and a useOnboardingStore — persist both with zustand/persist and MMKV"
+      - type: "🔍 Explore"
+        description: "Profile the app before and after migrating from Context to Zustand — measure the re-render reduction"
+      - type: "🤔 Reflect"
+        description: "When would you keep React Context instead of Zustand? Name two cases where Context is still the right choice."
+    runs_locally: true
+    prereqs: [L1-M20]
+
+  - id: L2-M02
+    title: "TanStack Query — Server State Fundamentals"
+    tier: "🟢 Core"
+    duration: "75 min"
+    source_chapters: [10]
+    ticketflow: "TicketFlow fetches transactions, balances, and contacts from a mock API using TanStack Query with caching and loading states"
+    summary: "Set up TanStack Query for all server data. Learn queries, query keys, stale time, cache time, and the mental model of server state vs client state."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Create useTransactions, useBalance, and useContacts query hooks — set up QueryClientProvider with sensible defaults for a mobile app"
+      - type: "🔍 Explore"
+        description: "Install React Query DevTools (Flipper plugin or Reactotron) — observe cache entries, refetch behavior, and stale/fresh transitions"
+      - type: "💡 Insight"
+        description: "Why is staleTime: 0 (the default) wrong for a mobile payment app? What staleTime would you set for balance vs transaction history?"
+    runs_locally: true
+    prereqs: [L2-M01]
+
+  - id: L2-M03
+    title: "TanStack Query — Mutations & Optimistic Updates"
+    tier: "🟡 Deep Dive"
+    duration: "75 min"
+    source_chapters: [10]
+    ticketflow: "TicketFlow's Send Money flow uses mutations with optimistic balance updates and rollback on failure"
+    summary: "Master mutations, optimistic updates, cache invalidation, and error rollback. Make TicketFlow's payment flow feel instant."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Implement the sendMoney mutation with optimistic balance deduction — on success invalidate transactions, on error rollback the balance"
+      - type: "🐛 Debug"
+        description: "Fix a race condition where two rapid sends show incorrect balance — implement proper optimistic update with cancelQueries"
+      - type: "📐 Design"
+        description: "Design the cache invalidation strategy for TicketFlow — which queries should invalidate when a payment succeeds?"
+    runs_locally: true
+    prereqs: [L2-M02]
+
+  - id: L2-M04
+    title: "API Layer Architecture"
+    tier: "🟡 Deep Dive"
+    duration: "60 min"
+    source_chapters: [10]
+    ticketflow: "TicketFlow has a clean API layer: typed API client, request/response interceptors, auth token refresh, and error handling"
+    summary: "Build a production API layer with typed endpoints, interceptors for auth, automatic token refresh, and centralized error handling."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Create TicketFlow's API client with axios/ky: base URL config, auth header interceptor, 401 → refresh token flow, and typed endpoint functions"
+      - type: "📐 Design"
+        description: "Design the error handling strategy — map HTTP status codes to user-facing error messages and recovery actions"
+      - type: "🔍 Explore"
+        description: "Add request/response logging in development — inspect the exact headers, body, and timing of each API call"
+    runs_locally: true
+    prereqs: [L2-M02]
+
+  - id: L2-M05
+    title: "Forms & Validation with React Hook Form + Zod"
+    tier: "🟢 Core"
+    duration: "60 min"
+    source_chapters: ["0d", 9]
+    ticketflow: "TicketFlow's Send Money and Profile Edit screens use validated forms with Zod schemas and real-time error feedback"
+    summary: "Replace manual form state with React Hook Form and Zod validation. Get type-safe, performant forms with great UX."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Refactor the Send Money form: Zod schema for amount (min/max, currency-aware), recipient (valid ID), and note — integrate with React Hook Form"
+      - type: "🐛 Debug"
+        description: "Fix a form that re-renders the entire screen on every keystroke — use React Hook Form's controlled vs uncontrolled approach"
+      - type: "💡 Insight"
+        description: "How does Zod's type inference eliminate the need to manually type your form state? Show the connection between z.infer<typeof schema> and your component props."
+    runs_locally: true
+    prereqs: [L2-M01]
+
+  # --------------------------------------------------------------------------
+  # L2-M06 to L2-M10: Advanced TypeScript & Patterns
+  # --------------------------------------------------------------------------
+
+  - id: L2-M06
+    title: "Advanced TypeScript — Discriminated Unions & Type Guards"
+    tier: "🟡 Deep Dive"
+    duration: "60 min"
+    source_chapters: [4, "0d"]
+    ticketflow: "TicketFlow uses discriminated unions for transaction types, API responses, and navigation params — impossible states are unrepresentable"
+    summary: "Use discriminated unions to model TicketFlow's domain. Make illegal states impossible to represent in the type system."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Model TicketFlow's transaction types as a discriminated union: Transfer | Payment | TopUp | Refund — each with different required fields"
+      - type: "🔍 Explore"
+        description: "Refactor API response handling from if/else chains to exhaustive switch statements — add a 'never' default to catch missing cases"
+      - type: "🐛 Debug"
+        description: "Fix a runtime crash caused by a transaction type the code doesn't handle — the TypeScript compiler should have caught this"
+    runs_locally: true
+    prereqs: [L1-M07, L2-M04]
+
+  - id: L2-M07
+    title: "Advanced TypeScript — Branded Types & Zod Schemas"
+    tier: "🟡 Deep Dive"
+    duration: "60 min"
+    source_chapters: [4, "0d"]
+    ticketflow: "TicketFlow uses branded types for UserId, TransactionId, and Amount — preventing accidental misuse at compile time"
+    summary: "Use branded types to prevent mixing up IDs and amounts. Connect Zod runtime validation with TypeScript compile-time types."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Create branded types for UserId, TransactionId, and CurrencyAmount — write helper functions that only accept the correct branded type"
+      - type: "📐 Design"
+        description: "Design TicketFlow's Zod schema library: transaction schema, user schema, API response schemas — all with .brand() for type safety"
+      - type: "🤔 Reflect"
+        description: "What bugs would branded types have prevented in TicketFlow's codebase? Give three concrete scenarios."
+    runs_locally: true
+    prereqs: [L2-M06]
+
+  - id: L2-M08
+    title: "Animations with Reanimated"
+    tier: "🟡 Deep Dive"
+    duration: "75 min"
+    source_chapters: [8]
+    ticketflow: "TicketFlow has smooth animations: balance card shimmer, pull-to-refresh spring, payment success confetti, and shared element transitions"
+    summary: "Add fluid animations using Reanimated v3. Learn shared values, worklets, and layout animations that run on the UI thread."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Add three animations to TicketFlow: (1) balance card entrance with spring, (2) transaction item swipe-to-delete with gesture handler, (3) payment success checkmark animation"
+      - type: "🔍 Explore"
+        description: "Compare a JS-driven animation vs a worklet-based animation — use the performance monitor to observe frame drops"
+      - type: "💡 Insight"
+        description: "Why do Reanimated worklets run on the UI thread instead of the JS thread? What happens to your animation when the JS thread is busy?"
+    runs_locally: true
+    prereqs: [L1-M14]
+
+  - id: L2-M09
+    title: "Error Boundaries & Error Handling Patterns"
+    tier: "🟢 Core"
+    duration: "45 min"
+    source_chapters: [9, 10]
+    ticketflow: "TicketFlow has error boundaries on every screen, graceful fallback UIs, and a global error handler for unhandled promise rejections"
+    summary: "Implement comprehensive error handling: error boundaries, query error states, network error detection, and user-friendly fallback UIs."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Create a reusable ErrorBoundary component with retry functionality — wrap each TicketFlow tab in its own boundary"
+      - type: "🐛 Debug"
+        description: "Simulate a network failure during a payment — verify the app shows the right error message and doesn't lose the user's input"
+      - type: "📐 Design"
+        description: "Design TicketFlow's error hierarchy: which errors show inline, which show toasts, which show full-screen fallbacks, which retry automatically?"
+    runs_locally: true
+    prereqs: [L2-M02]
+
+  - id: L2-M10
+    title: "Offline Support & MMKV Storage"
+    tier: "🟡 Deep Dive"
+    duration: "60 min"
+    source_chapters: [11, 12]
+    ticketflow: "TicketFlow works offline: cached transactions display, pending payments queue, and sync-on-reconnect"
+    summary: "Add offline support to TicketFlow using MMKV for fast storage, TanStack Query persistence, and a queue for pending operations."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Set up TanStack Query persistence with MMKV — enable offline viewing of transactions and balance. Create a pending payments queue that syncs when online"
+      - type: "🔍 Explore"
+        description: "Toggle airplane mode while using the app — verify cached data shows, new requests fail gracefully, and queued actions sync on reconnect"
+      - type: "🤔 Reflect"
+        description: "What's the conflict resolution strategy when an offline payment conflicts with a server-side change? Discuss last-write-wins vs merge strategies."
+    runs_locally: true
+    prereqs: [L2-M03]
+
+  # --------------------------------------------------------------------------
+  # L2-M11 to L2-M15: Testing & Quality
+  # --------------------------------------------------------------------------
+
+  - id: L2-M11
+    title: "Testing Fundamentals — Jest & React Native Testing Library"
+    tier: "🟢 Core"
+    duration: "75 min"
+    source_chapters: [17]
+    ticketflow: "TicketFlow has its first test suite: unit tests for utils, component tests for BalanceCard and TransactionItem"
+    summary: "Set up Jest and React Native Testing Library. Write your first unit and component tests following the testing trophy."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Write tests for TicketFlow: (1) unit test formatCurrency util, (2) component test BalanceCard renders amount correctly, (3) component test TransactionItem handles press"
+      - type: "🔍 Explore"
+        description: "Use getByRole, getByText, and queryByTestId — which queries should you prefer and why? Test the same component three different ways."
+      - type: "🤔 Reflect"
+        description: "Why does the testing trophy have more integration tests than unit tests? How does this apply to a fintech app where correctness matters?"
+    runs_locally: true
+    prereqs: [L2-M05]
+
+  - id: L2-M12
+    title: "Testing Async — MSW & Query Testing"
+    tier: "🟡 Deep Dive"
+    duration: "60 min"
+    source_chapters: [17, 10]
+    ticketflow: "TicketFlow has integration tests for the Send Money flow with mocked API responses via MSW"
+    summary: "Test components that fetch data using MSW (Mock Service Worker) for API mocking and TanStack Query test utilities."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Set up MSW handlers for TicketFlow's API — write an integration test for the Send Money flow: fill form → submit → verify success screen"
+      - type: "🐛 Debug"
+        description: "Fix a flaky test where the transaction list sometimes shows stale data — understand TanStack Query's cache behavior in tests"
+      - type: "💡 Insight"
+        description: "Why is MSW better than jest.mock for API testing? What does it test that simple mocks miss?"
+    runs_locally: true
+    prereqs: [L2-M11]
+
+  - id: L2-M13
+    title: "E2E Testing with Maestro"
+    tier: "🟡 Deep Dive"
+    duration: "75 min"
+    source_chapters: [17]
+    ticketflow: "TicketFlow has Maestro E2E tests covering the critical payment flow from launch to confirmation"
+    summary: "Write end-to-end tests using Maestro that test TicketFlow on a real simulator — covering the happy path and critical error scenarios."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Write a Maestro flow that launches TicketFlow, navigates to Send, enters an amount, selects a contact, confirms, and verifies the success screen"
+      - type: "🔍 Explore"
+        description: "Run the Maestro flow with 'maestro test' and 'maestro studio' — compare the developer experience to Detox/Appium"
+      - type: "📐 Design"
+        description: "Design TicketFlow's E2E test strategy — which 5 critical flows must pass before every release?"
+    runs_locally: true
+    prereqs: [L2-M11]
+
+  - id: L2-M14
+    title: "Rendering Pipeline & React Performance"
+    tier: "🟡 Deep Dive"
+    duration: "60 min"
+    source_chapters: [3, 13]
+    ticketflow: "TicketFlow's transaction list renders at 60fps — unnecessary re-renders eliminated with proper memoization"
+    summary: "Understand React's reconciliation, Fiber architecture, and how to eliminate unnecessary re-renders in TicketFlow."
+    exercises:
+      - type: "🔍 Explore"
+        description: "Use React DevTools Profiler on TicketFlow's Activity screen — identify the top 3 components that re-render unnecessarily"
+      - type: "🛠️ Build"
+        description: "Fix the re-renders: apply React.memo, useMemo, and useCallback where they actually matter — profile before and after"
+      - type: "🤔 Reflect"
+        description: "React Compiler auto-memoizes — does that mean you never need to think about re-renders? What can't the compiler optimize?"
+    runs_locally: true
+    prereqs: [L2-M02]
+
+  - id: L2-M15
+    title: "FlashList & Advanced List Performance"
+    tier: "🟡 Deep Dive"
+    duration: "60 min"
+    source_chapters: [13]
+    ticketflow: "TicketFlow's Activity tab uses FlashList with cell recycling — smooth scrolling even with 10,000+ transactions"
+    summary: "Replace FlatList with FlashList for TicketFlow's transaction history. Understand cell recycling, estimatedItemSize, and blank area tracking."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Migrate TicketFlow's transaction list from FlatList to FlashList — set estimatedItemSize, handle variable-height items, and add the performance overlay"
+      - type: "📊 Observe"
+        description: "Compare FlatList vs FlashList: scroll through 5,000 transactions and measure blank area percentage, JS frame drops, and memory usage"
+      - type: "🐛 Debug"
+        description: "Fix a FlashList bug where items show the wrong data after scrolling fast — understand cell recycling and key management"
+    runs_locally: true
+    prereqs: [L1-M15, L2-M14]
+
+  # --------------------------------------------------------------------------
+  # L2-M16 to L2-M20: CI/CD, Monitoring & Production Readiness
+  # --------------------------------------------------------------------------
+
+  - id: L2-M16
+    title: "Monitoring Setup — Sentry & Crashlytics"
+    tier: "🟢 Core"
+    duration: "75 min"
+    source_chapters: [20, 21]
+    ticketflow: "TicketFlow has Sentry integration with source maps, crash reporting, performance traces, and custom breadcrumbs"
+    summary: "Set up production monitoring from day one. Integrate Sentry for crash reporting and performance monitoring with proper source maps."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Install @sentry/react-native, configure it in TicketFlow's entry point, upload source maps in eas.json build hooks, and add breadcrumbs to the payment flow"
+      - type: "🔍 Explore"
+        description: "Trigger a crash in development and find it in the Sentry dashboard — verify the stack trace points to your actual source code, not minified JS"
+      - type: "📊 Observe"
+        description: "Set up a Sentry performance trace for the Send Money flow — measure the time from 'tap Send' to 'success screen rendered'"
+    runs_locally: true
+    prereqs: [L2-M09]
+
+  - id: L2-M17
+    title: "Firebase Analytics & Remote Config"
+    tier: "🟡 Deep Dive"
+    duration: "60 min"
+    source_chapters: [21]
+    ticketflow: "TicketFlow tracks key events (payment_sent, login, screen_view) in Firebase Analytics and uses Remote Config for feature flags"
+    summary: "Integrate Firebase Analytics for event tracking and Remote Config for feature flags. Build data-driven product decisions into TicketFlow."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Add Firebase Analytics to TicketFlow: track screen_view, payment_initiated, payment_completed, payment_failed events with structured parameters"
+      - type: "🛠️ Build"
+        description: "Set up Remote Config with a show_promo_banner flag — fetch on app start, use a cached fallback, and gate a promotional banner behind it"
+      - type: "📐 Design"
+        description: "Design TicketFlow's analytics event taxonomy — what events should you track and what parameters should each event carry?"
+    runs_locally: true
+    prereqs: [L2-M16]
+
+  - id: L2-M18
+    title: "CI/CD with GitHub Actions & EAS"
+    tier: "🟢 Core"
+    duration: "75 min"
+    source_chapters: [18]
+    ticketflow: "TicketFlow has a GitHub Actions workflow: lint, type-check, test on every PR; EAS preview build on merge to develop"
+    summary: "Set up a CI/CD pipeline that catches bugs before they reach production. Automate linting, testing, and EAS builds."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Create .github/workflows/ci.yml: run ESLint, TypeScript check, and Jest tests on every PR — fail the PR if any step fails"
+      - type: "🚀 Deploy"
+        description: "Add an EAS Build step that triggers a preview build when code merges to the develop branch — use eas build --profile preview --non-interactive"
+      - type: "📐 Design"
+        description: "Design TicketFlow's branch strategy: main (production), develop (preview builds), feature/* (CI only). Document the flow from commit to app store."
+    runs_locally: true
+    prereqs: [L2-M13]
+
+  - id: L2-M19
+    title: "EAS Update — Over-the-Air Updates"
+    tier: "🟢 Core"
+    duration: "60 min"
+    source_chapters: [6]
+    ticketflow: "TicketFlow can receive OTA updates — JS-only changes deploy in minutes without a full app store submission"
+    summary: "Set up EAS Update for instant JS-only deployments. Understand update channels, runtime versions, fingerprinting, and rollback strategies."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Configure EAS Update: set up channels (production, preview), publish a JS-only fix, and verify the app picks it up without reinstalling"
+      - type: "🔍 Explore"
+        description: "Experiment with runtime version policies — what happens when you push an update with a native dependency change? Understand fingerprinting."
+      - type: "🤔 Reflect"
+        description: "When should you use EAS Update vs a full EAS Build? What are the risks of OTA updates for a fintech app?"
+    runs_locally: true
+    prereqs: [L1-M20, L2-M18]
+
+  - id: L2-M20
+    title: "Security Fundamentals for Mobile"
+    tier: "🟢 Core"
+    duration: "60 min"
+    source_chapters: [22]
+    ticketflow: "TicketFlow stores tokens in secure storage, uses certificate pinning for API calls, and implements biometric auth"
+    summary: "Secure TicketFlow: encrypted storage for tokens, certificate pinning, biometric authentication, and secure API communication."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Replace AsyncStorage token storage with expo-secure-store — add biometric authentication gate before showing balance or sending payments"
+      - type: "🔍 Explore"
+        description: "Use a proxy tool (Charles/Proxyman) to intercept TicketFlow's API calls — then add certificate pinning and verify the proxy can't intercept anymore"
+      - type: "📐 Design"
+        description: "Review TicketFlow against the OWASP Mobile Top 10 — identify the top 3 vulnerabilities and create a remediation plan"
+    runs_locally: true
+    prereqs: [L2-M04]
+
+  # ============================================================================
+  # LOOP 3: MASTERY (L3-M01 to L3-M20)
+  # Architecture and production. Minimal scaffolding.
+  # TicketFlow arc: single app → production-ready monorepo with web dashboard
+  # ============================================================================
+
+  # --------------------------------------------------------------------------
+  # L3-M01 to L3-M05: Monorepo & Shared Code
+  # --------------------------------------------------------------------------
+
+  - id: L3-M01
+    title: "Monorepo Architecture with Turborepo"
+    tier: "🟡 Deep Dive"
+    duration: "90 min"
+    source_chapters: [15]
+    ticketflow: "TicketFlow is restructured as a Turborepo monorepo with apps/mobile, apps/web (placeholder), and packages/shared"
+    summary: "Restructure TicketFlow as a Turborepo monorepo. Set up workspaces, task pipelines, and shared packages between mobile and web."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Migrate TicketFlow to a Turborepo structure: move the Expo app to apps/mobile, create packages/shared for types and utils, configure turbo.json task pipeline"
+      - type: "🔍 Explore"
+        description: "Run 'turbo build --dry' and analyze the task graph — understand how Turborepo determines build order and cache hits"
+      - type: "📐 Design"
+        description: "Design the package boundary strategy: what goes in packages/shared vs packages/ui vs packages/api? What's the dependency direction rule?"
+    runs_locally: true
+    prereqs: [L2-M20]
+
+  - id: L3-M02
+    title: "Shared Packages — Types, Utils & API Client"
+    tier: "🟡 Deep Dive"
+    duration: "60 min"
+    source_chapters: [15, 4]
+    ticketflow: "TicketFlow's TypeScript types, API client, and utility functions live in shared packages consumed by both mobile and web"
+    summary: "Extract shared code into packages: types, API client, validation schemas, and utilities. Configure TypeScript project references."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Create packages/types (Transaction, User, API schemas), packages/api (typed client), and packages/utils (formatCurrency, date helpers) — import them in apps/mobile"
+      - type: "🐛 Debug"
+        description: "Fix TypeScript path resolution issues between packages — configure project references and ensure IDE go-to-definition works across packages"
+      - type: "💡 Insight"
+        description: "Why are barrel files (index.ts re-exports) an anti-pattern in monorepos? What's the impact on build time and tree shaking?"
+    runs_locally: true
+    prereqs: [L3-M01]
+
+  - id: L3-M03
+    title: "Next.js Web Dashboard — Setup & Routing"
+    tier: "🟢 Core"
+    duration: "75 min"
+    source_chapters: [25, 24]
+    ticketflow: "TicketFlow has a Next.js web dashboard in apps/web with App Router — login page, dashboard layout, and transaction list page"
+    summary: "Create TicketFlow's web dashboard with Next.js App Router. Set up the project in the monorepo, configure layouts, and build the first pages."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Create apps/web with Next.js App Router: root layout with sidebar navigation, /dashboard page showing balance, /transactions page with table"
+      - type: "🔍 Explore"
+        description: "Import types from packages/types in the web app — verify TypeScript resolves correctly across the monorepo"
+      - type: "🤔 Reflect"
+        description: "How does Next.js App Router's file-based routing compare to Expo Router's? What patterns transfer directly and what's different?"
+    runs_locally: true
+    prereqs: [L3-M02]
+
+  - id: L3-M04
+    title: "Server Components & Data Fetching in Next.js"
+    tier: "🟡 Deep Dive"
+    duration: "75 min"
+    source_chapters: [25]
+    ticketflow: "TicketFlow web dashboard fetches data with Server Components — zero client-side JS for the transaction table, instant page loads"
+    summary: "Use Server Components for data fetching in the dashboard. Understand the server/client component boundary and when to use each."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Build the transactions table as a Server Component — fetch data directly in the component, stream the response with Suspense boundaries"
+      - type: "📐 Design"
+        description: "Draw the server/client component tree for the dashboard — mark which components must be client (interactive) vs can be server (data display)"
+      - type: "🐛 Debug"
+        description: "Fix the 'cannot use useState in a Server Component' error — understand the 'use client' directive and the serialization boundary"
+    runs_locally: true
+    prereqs: [L3-M03]
+
+  - id: L3-M05
+    title: "Server Actions & Mutations in Next.js"
+    tier: "🟡 Deep Dive"
+    duration: "60 min"
+    source_chapters: [25]
+    ticketflow: "TicketFlow web dashboard uses Server Actions for admin operations: flagging transactions, updating user limits, sending notifications"
+    summary: "Use Server Actions for mutations in the web dashboard. Learn form handling, optimistic updates, and error handling with useActionState."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Create Server Actions for TicketFlow admin: flagTransaction, updateUserLimit, and sendNotification — use useActionState for pending states"
+      - type: "🔍 Explore"
+        description: "Inspect the network tab when a Server Action fires — understand how Next.js serializes the action and sends it as a POST request"
+      - type: "💡 Insight"
+        description: "Compare Server Actions to TanStack Query mutations on mobile — what are the DX and performance trade-offs of each approach?"
+    runs_locally: true
+    prereqs: [L3-M04]
+
+  # --------------------------------------------------------------------------
+  # L3-M06 to L3-M10: Design Systems & Advanced UI
+  # --------------------------------------------------------------------------
+
+  - id: L3-M06
+    title: "Design System — Tokens & Cross-Platform Components"
+    tier: "🟡 Deep Dive"
+    duration: "90 min"
+    source_chapters: [16]
+    ticketflow: "TicketFlow has a packages/ui design system with shared tokens (colors, spacing, typography) and cross-platform Button, Card, and Input components"
+    summary: "Build TicketFlow's design system package. Define tokens, create cross-platform components, and ensure visual consistency between mobile and web."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Create packages/ui: define design tokens (colors, spacing, radius, typography), build Button, Card, Input, and Badge components that work on both RN and web"
+      - type: "📐 Design"
+        description: "Design the component API for a TransactionCard that works identically on mobile and web — handle platform-specific press feedback"
+      - type: "🔍 Explore"
+        description: "Compare approaches: NativeWind (Tailwind) vs Tamagui vs shared StyleSheet — which gives the best cross-platform DX?"
+    runs_locally: true
+    prereqs: [L3-M03]
+
+  - id: L3-M07
+    title: "shadcn/ui for the Web Dashboard"
+    tier: "🟡 Deep Dive"
+    duration: "60 min"
+    source_chapters: [16]
+    ticketflow: "TicketFlow web dashboard uses shadcn/ui components: data tables, command palette, sheet panels, and chart components"
+    summary: "Integrate shadcn/ui into the web dashboard for polished, accessible components. Customize the theme to match TicketFlow's design system."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Add shadcn/ui to apps/web: install Table, Command, Sheet, and Chart components — customize the theme to use TicketFlow's design tokens"
+      - type: "🛠️ Build"
+        description: "Build a transaction data table with sorting, filtering, and pagination using shadcn/ui's DataTable pattern"
+      - type: "📐 Design"
+        description: "Create a component inventory: which shadcn/ui components does TicketFlow need? Map each dashboard feature to its UI components."
+    runs_locally: true
+    prereqs: [L3-M06]
+
+  - id: L3-M08
+    title: "Advanced Animations & Gesture Patterns"
+    tier: "🔴 Expert"
+    duration: "75 min"
+    source_chapters: [8]
+    ticketflow: "TicketFlow has a swipe-to-pay card interface, shared element transitions between screens, and a gesture-driven bottom sheet"
+    summary: "Build complex gesture-driven interactions: swipeable cards, shared element transitions, and interactive bottom sheets."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Build a swipe-to-pay card stack (like Tinder cards) for TicketFlow's quick-pay feature — pan gesture with spring physics and card rotation"
+      - type: "🛠️ Build"
+        description: "Implement shared element transitions between the transaction list and detail screen using react-native-reanimated"
+      - type: "📊 Observe"
+        description: "Profile the gesture-driven animations: verify they maintain 60fps using the Reanimated performance overlay and React DevTools"
+    runs_locally: true
+    prereqs: [L2-M08]
+
+  - id: L3-M09
+    title: "Accessibility — Making TicketFlow Usable by Everyone"
+    tier: "🟢 Core"
+    duration: "60 min"
+    source_chapters: [16, 8]
+    ticketflow: "TicketFlow passes VoiceOver/TalkBack testing on all critical flows — accessible labels, roles, and navigation"
+    summary: "Audit and fix TicketFlow's accessibility: screen reader support, accessible labels, focus management, and color contrast."
+    exercises:
+      - type: "🔍 Explore"
+        description: "Navigate TicketFlow using only VoiceOver (iOS) or TalkBack (Android) — document every place where the experience breaks"
+      - type: "🛠️ Build"
+        description: "Fix all accessibility issues: add accessibilityLabel, accessibilityRole, accessibilityHint to interactive elements, ensure focus order is logical"
+      - type: "📐 Design"
+        description: "Create an accessibility checklist for TicketFlow — what must pass before every release? Include WCAG 2.1 AA requirements."
+    runs_locally: true
+    prereqs: [L3-M06]
+
+  - id: L3-M10
+    title: "Storybook — Component Documentation & Visual Testing"
+    tier: "🟡 Deep Dive"
+    duration: "60 min"
+    source_chapters: [16, 17]
+    ticketflow: "TicketFlow's design system components are documented in Storybook with interactive stories and visual regression tests"
+    summary: "Set up Storybook for TicketFlow's component library. Document components with stories and add visual regression testing."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Set up Storybook in packages/ui — create stories for Button (all variants), TransactionCard (states), and BalanceDisplay"
+      - type: "🛠️ Build"
+        description: "Add Chromatic or Percy for visual regression testing — capture baselines and detect unintended visual changes in PRs"
+      - type: "📐 Design"
+        description: "Design the story organization: how do you structure stories for a cross-platform component library? Separate mobile vs web viewports?"
+    runs_locally: true
+    prereqs: [L3-M06]
+
+  # --------------------------------------------------------------------------
+  # L3-M11 to L3-M15: Vercel, Performance & Advanced Patterns
+  # --------------------------------------------------------------------------
+
+  - id: L3-M11
+    title: "Vercel Deployment & Platform Features"
+    tier: "🟢 Core"
+    duration: "75 min"
+    source_chapters: [24]
+    ticketflow: "TicketFlow web dashboard is deployed on Vercel with preview deployments on every PR, environment variables, and analytics"
+    summary: "Deploy TicketFlow's web dashboard to Vercel. Set up preview deployments, environment variables, Analytics, and Speed Insights."
+    exercises:
+      - type: "🚀 Deploy"
+        description: "Deploy apps/web to Vercel: link the monorepo, configure root directory, set environment variables, and verify the production deployment"
+      - type: "🔍 Explore"
+        description: "Open a PR and verify the preview deployment URL works — test it with different environment variables vs production"
+      - type: "📊 Observe"
+        description: "Enable Vercel Analytics and Speed Insights — measure Core Web Vitals for the dashboard and identify the largest LCP element"
+    runs_locally: true
+    prereqs: [L3-M05]
+
+  - id: L3-M12
+    title: "Vercel Functions & Edge Middleware"
+    tier: "🟡 Deep Dive"
+    duration: "60 min"
+    source_chapters: [24, 25]
+    ticketflow: "TicketFlow web dashboard uses Vercel Functions for API routes and Edge Middleware for auth checks and geo-routing"
+    summary: "Use Vercel Functions for API endpoints and Edge Middleware for request-level logic like authentication and geolocation."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Create API routes in apps/web for TicketFlow: /api/transactions (proxy to backend), /api/webhooks/payment (receive payment notifications)"
+      - type: "🛠️ Build"
+        description: "Add Edge Middleware that checks auth tokens, redirects unauthenticated users to /login, and adds geo-based currency headers"
+      - type: "💡 Insight"
+        description: "When should you use Edge Middleware vs API Route vs Server Component for data fetching? Map TicketFlow's needs to each approach."
+    runs_locally: true
+    prereqs: [L3-M11]
+
+  - id: L3-M13
+    title: "Mobile Performance Optimization — Bundle & Cold Start"
+    tier: "🔴 Expert"
+    duration: "75 min"
+    source_chapters: [13, 5]
+    ticketflow: "TicketFlow's bundle size is reduced by 30%+, cold start time is under 1 second, and lazy loading is enabled for non-critical screens"
+    summary: "Optimize TicketFlow's mobile performance: reduce bundle size, speed up cold start, implement lazy loading, and eliminate render bottlenecks."
+    exercises:
+      - type: "📊 Observe"
+        description: "Run 'npx react-native-bundle-visualizer' on TicketFlow — identify the top 5 largest dependencies and evaluate if they can be replaced or lazy-loaded"
+      - type: "🛠️ Build"
+        description: "Implement lazy loading for TicketFlow's non-critical screens (Profile, Settings) — measure cold start time before and after"
+      - type: "📐 Design"
+        description: "Create TicketFlow's performance budget: max bundle size, max cold start time, min FPS, max memory — document the monitoring strategy"
+    runs_locally: true
+    prereqs: [L2-M15]
+
+  - id: L3-M14
+    title: "Profiling & Debugging in Production"
+    tier: "🔴 Expert"
+    duration: "75 min"
+    source_chapters: [14]
+    ticketflow: "TicketFlow team can profile production issues: Hermes CPU profiles, memory snapshots, and Sentry performance traces"
+    summary: "Master production debugging: Hermes profiling, memory leak detection, Sentry performance traces, and systematic debugging workflows."
+    exercises:
+      - type: "🔍 Explore"
+        description: "Take a Hermes CPU profile while scrolling the transaction list — identify the hottest functions and optimize them"
+      - type: "🐛 Debug"
+        description: "Find and fix a simulated memory leak: a component that registers an event listener but never cleans it up — use the memory profiler to prove it's fixed"
+      - type: "📐 Design"
+        description: "Design TicketFlow's production debugging playbook — given a user report of 'app is slow', what's the systematic investigation procedure?"
+    runs_locally: true
+    prereqs: [L2-M16, L2-M14]
+
+  - id: L3-M15
+    title: "Caching Strategy — Mobile, Web & CDN"
+    tier: "🔴 Expert"
+    duration: "60 min"
+    source_chapters: [11, 25]
+    ticketflow: "TicketFlow has a multi-layer caching strategy: MMKV on mobile, TanStack Query cache, HTTP cache headers, and Vercel Edge Config for feature flags"
+    summary: "Design TicketFlow's complete caching strategy across all layers: device storage, in-memory cache, HTTP cache, CDN cache, and edge config."
+    exercises:
+      - type: "📐 Design"
+        description: "Draw TicketFlow's caching architecture: which data lives at which cache layer? What are the TTLs and invalidation strategies for each?"
+      - type: "🛠️ Build"
+        description: "Set up Vercel Edge Config for TicketFlow's feature flags and exchange rates — configure the client SDK in both mobile and web apps"
+      - type: "🤔 Reflect"
+        description: "For a fintech app, what data should NEVER be cached? What's the risk of showing a stale balance? How do you balance freshness vs performance?"
+    runs_locally: true
+    prereqs: [L2-M10, L3-M04]
+
+  # --------------------------------------------------------------------------
+  # L3-M16 to L3-M20: Production Architecture & Beast Mode
+  # --------------------------------------------------------------------------
+
+  - id: L3-M16
+    title: "Frontend Architecture Patterns"
+    tier: "🔴 Expert"
+    duration: "75 min"
+    source_chapters: [19]
+    ticketflow: "TicketFlow codebase follows feature-based architecture with clear module boundaries, architectural linting, and dependency rules"
+    summary: "Apply production architecture patterns: feature-based structure, module boundaries, architectural linting, and the BFF pattern."
+    exercises:
+      - type: "📐 Design"
+        description: "Redesign TicketFlow's folder structure from technical grouping (components/, hooks/) to feature-based (features/payments/, features/contacts/) — document the rules"
+      - type: "🛠️ Build"
+        description: "Set up ESLint boundary rules that enforce TicketFlow's architecture: features can't import from other features, shared packages are the only cross-cutting dependency"
+      - type: "🤔 Reflect"
+        description: "At what team size does TicketFlow need microfrontends vs a well-structured monolith? What are the real costs of microfrontends?"
+    runs_locally: true
+    prereqs: [L3-M02]
+
+  - id: L3-M17
+    title: "Advanced CI/CD — Monorepo Pipelines & Release Automation"
+    tier: "🔴 Expert"
+    duration: "75 min"
+    source_chapters: [18]
+    ticketflow: "TicketFlow has affected-only CI (only test what changed), Changesets for versioning, and automated release notes"
+    summary: "Scale CI/CD for a monorepo: affected-only testing with Turborepo, Changesets for semantic versioning, and automated release workflows."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Configure Turborepo's --filter flag in GitHub Actions to only build/test affected packages — measure CI time reduction"
+      - type: "🛠️ Build"
+        description: "Set up Changesets for TicketFlow: create a changeset for a feature, run the version command, and generate release notes automatically"
+      - type: "📐 Design"
+        description: "Design TicketFlow's release process: how does a feature go from PR → staging → production for both mobile (EAS) and web (Vercel)?"
+    runs_locally: true
+    prereqs: [L2-M18, L3-M01]
+
+  - id: L3-M18
+    title: "AI-Powered Features with Vercel AI SDK"
+    tier: "🟡 Deep Dive"
+    duration: "75 min"
+    source_chapters: [26]
+    ticketflow: "TicketFlow has an AI assistant that helps categorize transactions, explain spending patterns, and answer questions about account activity"
+    summary: "Add AI features to TicketFlow using the Vercel AI SDK. Build a transaction categorizer, spending insights, and a conversational assistant."
+    exercises:
+      - type: "🛠️ Build"
+        description: "Create an AI-powered transaction categorizer using Vercel AI SDK: streaming responses, structured output for categories, and a chat interface for spending questions"
+      - type: "🔍 Explore"
+        description: "Use AI SDK's tool calling to let the AI assistant query TicketFlow's transaction API — the AI decides which API calls to make to answer user questions"
+      - type: "📐 Design"
+        description: "Design the AI feature architecture: which AI calls happen on the server (web) vs on-device? How do you handle AI latency in a fintech UX?"
+    runs_locally: true
+    prereqs: [L3-M12]
+
+  - id: L3-M19
+    title: "Mobile Metrics, Dashboards & Alerting"
+    tier: "🔴 Expert"
+    duration: "60 min"
+    source_chapters: [20, 23]
+    ticketflow: "TicketFlow has a monitoring dashboard with crash-free rate, cold start P75, payment success rate, and alert thresholds"
+    summary: "Build TicketFlow's operational dashboard: define key metrics, set up alerts, and establish the monitoring practices that maintain 99.9% crash-free rates."
+    exercises:
+      - type: "📊 Observe"
+        description: "Set up a Sentry/Datadog dashboard for TicketFlow: crash-free rate, cold start P75, API latency P95, payment success rate, ANR rate"
+      - type: "📐 Design"
+        description: "Define TicketFlow's SLOs: 99.9% crash-free sessions, <1s cold start P75, <500ms API P95, >99.5% payment success — what are the alert thresholds?"
+      - type: "🤔 Reflect"
+        description: "Your crash-free rate drops from 99.95% to 99.7% after a release — walk through the investigation and rollback decision process"
+    runs_locally: true
+    prereqs: [L2-M16, L2-M17]
+
+  - id: L3-M20
+    title: "Beast Mode — Operational Readiness & The Frontend Architect's Playbook"
+    tier: "🔴 Expert"
+    duration: "90 min"
+    source_chapters: [28]
+    ticketflow: "TicketFlow is production-ready: monorepo, mobile app, web dashboard, monitoring, CI/CD, design system, AI features — the full stack. You are the frontend architect."
+    summary: "The capstone module. Verify TicketFlow's production readiness against the Beast Mode checklist. Build the operational playbook. Become the frontend architect."
+    exercises:
+      - type: "📐 Design"
+        description: "Run TicketFlow through the Beast Mode day-one checklist: access matrix, dashboard setup, codebase navigation, incident readiness — document gaps and fix them"
+      - type: "🤔 Reflect"
+        description: "Write TicketFlow's Frontend Architect Playbook: onboarding guide for new engineers, architecture decision records, escalation procedures, and tribal knowledge documentation"
+      - type: "🚀 Deploy"
+        description: "Final deployment: push TicketFlow mobile via EAS Build (production profile) and web via Vercel (production). Verify monitoring, analytics, and error tracking are all operational."
+    runs_locally: true
+    prereqs: [L3-M17, L3-M19]
