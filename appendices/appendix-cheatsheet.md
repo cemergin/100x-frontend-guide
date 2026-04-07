@@ -136,6 +136,93 @@
 | **Vercel Production** | Web production | Instant rollback to previous | Low |
 | **Vercel Rolling Release** | Gradual web production | Automatic on error spike | Very low |
 
+### Auth Provider
+
+| Tool | Best For | When to Switch | Pricing |
+|------|----------|----------------|---------|
+| **Clerk** | Drop-in UI components, fast integration, multi-tenant SaaS | You need deep customization of auth flows or self-hosting | Free up to 10K MAU; Pro $25/mo + $0.02/MAU |
+| **Supabase Auth** | Full-stack Supabase projects, self-hosted requirements | You need advanced MFA, org management, or enterprise SSO | Free tier included with Supabase; Pro $25/mo |
+| **Firebase Auth** | Google ecosystem, mobile-first apps, anonymous auth | You need server-side sessions or non-Google identity providers | Free up to 50K MAU; Blaze pay-as-you-go |
+| **Auth.js (NextAuth)** | Open-source, framework-agnostic, full control | You need hosted infrastructure, pre-built UI, or enterprise support | Free (open-source); self-hosted |
+| **Custom** | Unique compliance requirements, full ownership | Almost never -- prefer a managed solution unless legally required | Engineering time (most expensive long-term) |
+
+### Database
+
+| Tool | Best For | When to Switch | Pricing |
+|------|----------|----------------|---------|
+| **Postgres (Neon)** | Serverless apps, branching workflows, Next.js/Vercel | You need MySQL compatibility or embedded/edge DB | Free tier; Pro from $19/mo based on compute |
+| **MySQL (PlanetScale)** | High-throughput OLTP, schema branching, Vitess-backed scale | You need JSON ops, full-text search, or PostGIS | Scaler from $39/mo; free tier available |
+| **SQLite (Turso)** | Edge-first apps, embedded, low-latency reads, libSQL | You need complex joins, concurrent writes, or large datasets | Free 500 DBs; Scaler $29/mo |
+| **Supabase** | Full-stack Postgres + Auth + Realtime + Storage in one | You need non-Postgres DB or want to avoid platform lock-in | Free tier; Pro $25/mo per project |
+
+### ORM
+
+| Tool | Best For | When to Switch | Pricing |
+|------|----------|----------------|---------|
+| **Drizzle** | SQL-first, edge runtimes, maximum type safety, lightweight | You need a mature migration GUI or extensive relation modeling | Free (open-source) |
+| **Prisma** | Rapid prototyping, schema-first design, rich ecosystem | Bundle size matters (edge), you need raw SQL perf, or serverless cold starts hurt | Free (open-source); Accelerate/Pulse paid |
+
+### Search
+
+| Tool | Best For | When to Switch | Pricing |
+|------|----------|----------------|---------|
+| **Algolia** | Instant search, e-commerce, typo tolerance, analytics | Budget-constrained or need self-hosted | Free 10K requests/mo; Pay-as-you-go from $1/1K requests |
+| **Typesense** | Self-hosted, open-source, fast and simple setup | You need AI-powered search or advanced analytics | Free (open-source); Typesense Cloud from $29.99/mo |
+| **Meilisearch** | Developer-friendly, great defaults, multi-tenancy | You need geo-search or complex filtering at scale | Free (open-source); Cloud from $30/mo |
+| **Postgres FTS** | Already on Postgres, simple search, no extra infra | You need typo tolerance, faceting, or sub-10ms results | Free (built into Postgres) |
+
+### Feature Flag Provider
+
+| Tool | Best For | When to Switch | Pricing |
+|------|----------|----------------|---------|
+| **Statsig** | Product experimentation, A/B testing, feature gates | You need on-prem or have <1ms latency requirements | Free up to 1M events; Pro usage-based |
+| **LaunchDarkly** | Enterprise feature management, complex targeting rules | Budget-constrained or you need simpler setup | Starter from $10/seat/mo; Enterprise custom |
+| **Unleash** | Self-hosted, open-source, GDPR-compliant | You need built-in experimentation or analytics | Free (open-source); Pro from $80/mo |
+| **Vercel Flags** | Next.js/Vercel projects, edge evaluation, zero config | You need cross-platform flags beyond Vercel | Included with Vercel Pro; limited free tier |
+
+### Real-time
+
+| Tool | Best For | When to Switch | Pricing |
+|------|----------|----------------|---------|
+| **Socket.io** | Custom real-time logic, self-hosted, full control | You need managed infrastructure or global edge delivery | Free (open-source); self-hosted |
+| **Ably** | Global edge messaging, guaranteed delivery, presence | Budget-constrained or simple pub/sub needs | Free 6M messages/mo; Pro from $29/mo |
+| **Pusher** | Simple channels/events, quick integration, triggers | You need complex presence, history, or guaranteed ordering | Free 200K messages/day; Pro from $49/mo |
+| **Supabase Realtime** | Already on Supabase, DB change streams, presence | You need custom protocols or non-Postgres sources | Included with Supabase plan |
+
+### Email
+
+| Tool | Best For | When to Switch | Pricing |
+|------|----------|----------------|---------|
+| **Resend** | Developer experience, React Email, modern API | You need advanced analytics or high-volume marketing | Free 3K emails/mo; Pro from $20/mo |
+| **SendGrid** | High volume, marketing + transactional, legacy support | You want better DX or simpler API | Free 100/day; Essentials from $19.95/mo |
+| **Postmark** | Transactional email, deliverability, speed | You need marketing emails or complex templates | Free 100/mo; $15/mo for 10K emails |
+| **SES** | AWS ecosystem, lowest cost at scale, raw SMTP | You need managed templates, analytics, or quick setup | $0.10 per 1K emails (cheapest at scale) |
+
+### Analytics
+
+| Tool | Best For | When to Switch | Pricing |
+|------|----------|----------------|---------|
+| **PostHog** | Open-source, product analytics + session replay + flags | You need enterprise support or advanced BI integrations | Free 1M events/mo; paid usage-based |
+| **Mixpanel** | Event-based analytics, funnels, retention, user flows | You need session replay or feature flags built-in | Free 20M events/mo; Growth from $28/mo |
+| **Firebase Analytics** | Mobile-first, Google ecosystem, free unlimited events | You need advanced funnels or non-Google integrations | Free (unlimited); BigQuery export included |
+| **Amplitude** | Enterprise product analytics, behavioral cohorts, AI | Budget-constrained or need simpler setup | Free 100K MAU; Growth from $49/mo |
+
+### Image CDN
+
+| Tool | Best For | When to Switch | Pricing |
+|------|----------|----------------|---------|
+| **Cloudinary** | Rich transformations, video, AI-powered cropping | You need lower cost at scale or simpler API | Free 25 credits/mo; Plus from $89/mo |
+| **Imgix** | Performance-focused, real-time params, simple CDN | You need video processing or advanced AI features | Free trial; Starter from $10/mo |
+| **Cloudflare Images** | Budget, global CDN, simple resize/optimize | You need complex transformations or video | $5/mo for 100K images stored + $1/100K delivered |
+| **Vercel (next/image)** | Next.js projects, zero config, automatic optimization | You need transformations beyond resize/format | Included with Vercel plan; 1K optimizations free |
+
+### GraphQL Client
+
+| Tool | Best For | When to Switch | Pricing |
+|------|----------|----------------|---------|
+| **Apollo Client** | Complex caching, local state, devtools, large teams | Bundle size matters or you need simpler setup | Free (open-source); Apollo Studio paid |
+| **urql** | Lightweight, extensible via exchanges, SSR-friendly | You need normalized caching or advanced local state | Free (open-source) |
+
 ---
 
 ## Essential Commands
@@ -316,6 +403,60 @@ turbo link
 turbo build               # Now caches remotely
 ```
 
+### Drizzle ORM
+
+```bash
+# Generate SQL migrations from schema changes
+npx drizzle-kit generate
+
+# Push schema directly to database (dev only, no migration files)
+npx drizzle-kit push
+
+# Open Drizzle Studio (database GUI)
+npx drizzle-kit studio
+
+# Run seed script
+npx tsx src/db/seed.ts
+# or with drizzle-seed
+npx drizzle-seed
+```
+
+### Stripe CLI
+
+```bash
+# Listen for webhooks locally (forward to your dev server)
+stripe listen --forward-to localhost:3000/api/webhooks/stripe
+
+# Trigger a test event
+stripe trigger payment_intent.succeeded
+stripe trigger customer.subscription.created
+
+# View recent logs
+stripe logs tail
+
+# View recent events
+stripe events list --limit 5
+
+# Create a test customer
+stripe customers create --email test@example.com
+```
+
+### Changesets
+
+```bash
+# Add a changeset (interactive prompt for packages + semver bump)
+npx changeset add
+
+# Version packages (consumes changesets, updates package.json + CHANGELOG)
+npx changeset version
+
+# Publish changed packages to npm
+npx changeset publish
+
+# Check changeset status
+npx changeset status
+```
+
 ---
 
 ## Key Thresholds
@@ -352,6 +493,36 @@ turbo build               # Now caches remotely
 | **Binary size (iOS)** | > 200MB | Can't download over cellular |
 | **Binary size (Android)** | > 150MB AAB | Play Store warning |
 | **Memory (iOS)** | > 1.5GB | Jetsam kill (OOM) |
+
+### Mobile Budgets
+
+| Metric | Target | Context |
+|--------|--------|---------|
+| **Cold start** | < 1.5s | Users abandon after 1.5s on mobile |
+| **JS bundle (compressed)** | < 15MB | Over-the-air download ceiling on slow 3G |
+| **Memory usage** | < 200MB | Safe headroom before OS background kills |
+| **Frame budget** | 16.67ms | 60fps target; jank visible above this |
+| **First meaningful paint** | < 2s | Perceived loading threshold |
+
+### Play Store Vitals
+
+| Metric | Threshold | Consequence |
+|--------|-----------|-------------|
+| **ANR rate** | < 0.47% | Exceeding triggers bad behavior warning |
+| **Crash rate** | < 1.09% | Exceeding triggers bad behavior warning |
+| **Excessive wakeups** | < 10 per hour | Battery drain warning |
+| **Stuck partial wakelock** | < 0.30% | Background energy warning |
+| **Excessive background Wi-Fi** | < 0.10% | Network usage warning |
+
+### Cookie and Storage Limits
+
+| Limit | Value | Notes |
+|-------|-------|-------|
+| **Cookie size** | 4KB per cookie | Name + value + attributes combined |
+| **Cookies per domain** | ~50 | Browser-dependent (Chrome ~180, Safari ~50) |
+| **localStorage** | 5-10MB per origin | Synchronous, blocks main thread |
+| **sessionStorage** | 5-10MB per origin | Cleared on tab close |
+| **IndexedDB** | Varies (GB range) | Async, best for large structured data |
 
 ### TanStack Query Defaults
 

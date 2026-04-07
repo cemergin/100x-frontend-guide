@@ -6,10 +6,10 @@
 
 | Ch | Title | Lines | Difficulty | Key Topics |
 |----|-------|------:|-----------|------------|
-| [0](./00-javascript-hard-parts.md) | JavaScript — The Hard Parts | 1703 | Beginner to Intermediate | Execution context, call stack, event loop, closures, promises, async/await, generators, prototypes, `this` |
-| [0b](./00b-ui-development-hard-parts.md) | UI Development — The Hard Parts | 1498 | Beginner to Intermediate | DOM, CSSOM, data binding, virtual DOM, diffing, reconciliation, composition, declarative UI |
-| [0c](./00c-react-fundamentals.md) | React — From First Principles | 1590 | Beginner to Intermediate | JSX, components, props, state, hooks, useState, useEffect, useRef, memoization, useReducer, context, custom hooks, React 19 |
-| [0d](./00d-typescript-mastery.md) | TypeScript — From Fundamentals to Enterprise Mastery | 3296 | Beginner to Advanced | Type system, generics, unions, discriminated unions, type guards, utility types, conditional types, branded types, Zod, tsconfig |
+| 0 | [JavaScript — The Hard Parts](./00-javascript-hard-parts.md) | 1,715 | Beginner to Intermediate | Execution context, call stack, event loop, callback queue, microtask queue, closures, higher-order functions, prototypes, `this`, async/await, promises, generators, iterators |
+| 0b | [UI Development — The Hard Parts](./00b-ui-development-hard-parts.md) | 1,510 | Beginner to Intermediate | DOM, CSSOM, WebIDL, data binding, one-way data binding, virtual DOM, diffing, reconciliation, composition, declarative UI |
+| 0c | [React — From First Principles](./00c-react-fundamentals.md) | 1,602 | Beginner to Intermediate | JSX, components, props, state, hooks, useState, useEffect, useRef, useCallback, useMemo, useReducer, useContext, custom hooks, React 19 |
+| 0d | [TypeScript — From Fundamentals to Enterprise Mastery](./00d-typescript-mastery.md) | 3,309 | Beginner to Advanced | Type system, inference, unions, intersections, discriminated unions, generics, type guards, utility types, conditional types, template literal types, branded types, Zod, tsconfig |
 
 ## Reading Order
 

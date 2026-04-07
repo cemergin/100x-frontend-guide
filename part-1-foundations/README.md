@@ -5,12 +5,12 @@
 ## Chapters
 
 | Ch | Title | Lines | Difficulty | Key Topics |
-|----|-------|-------|-----------|------------|
-| [1](./01-react-native-internals.md) | React Native Architecture & Internals | 461 | Intermediate to Advanced | New Architecture, JSI, Fabric, TurboModules, Hermes, threading model, bridgeless mode, cold start, rendering pipeline |
-| [2](./02-browser-rendering.md) | Browser Rendering & Web Fundamentals | 1,859 | Intermediate | Box model, formatting context, reflow, repaint, composition layers, GPU, Core Web Vitals, LCP, INP, CLS |
-| [3](./03-rendering-pipeline.md) | The Rendering Pipeline — Mobile & Web | 1,584 | Intermediate to Advanced | React reconciliation, Fiber, concurrent features, React Compiler, useTransition, useDeferredValue, Suspense |
-| [4](./04-typescript-at-scale.md) | TypeScript at Scale | 1,530 | Intermediate to Advanced | Project references, barrel files, diagnostics, monorepo tsconfig, discriminated unions, branded types, Zod, ESLint boundaries |
-| [5](./05-build-toolchain.md) | The Build Toolchain — From package.json to Running App | 2,646 | Intermediate to Advanced | Bundlers, transpilers, Babel, SWC, esbuild, Metro, Webpack, Vite, Turbopack, Rspack, Bun, ESM vs CJS, tree shaking, code splitting |
+|----|-------|------:|-----------|------------|
+| 1 | [React Native Architecture & Internals](./01-react-native-internals.md) | 2,587 | Intermediate to Advanced | New Architecture, JSI, Fabric, TurboModules, Hermes, threading model, bridgeless mode, cold start, rendering pipeline |
+| 2 | [Browser Rendering & Web Fundamentals](./02-browser-rendering.md) | 1,871 | Intermediate | Box model, formatting context, reflow, repaint, composition layers, GPU, Core Web Vitals, LCP, INP, CLS |
+| 3 | [The Rendering Pipeline — Mobile & Web](./03-rendering-pipeline.md) | 1,596 | Intermediate to Advanced | React reconciliation, Fiber, concurrent features, React Compiler, useTransition, useDeferredValue, Suspense |
+| 4 | [TypeScript at Scale](./04-typescript-at-scale.md) | 1,542 | Intermediate to Advanced | Project references, barrel files, diagnostics, monorepo tsconfig, discriminated unions, branded types, Zod, ESLint boundaries, dependency-cruiser |
+| 5 | [The Build Toolchain — From package.json to Running App](./05-build-toolchain.md) | 2,658 | Intermediate to Advanced | Bundlers, transpilers, Babel, SWC, esbuild, Metro, Webpack, Vite, Turbopack, Rspack, Bun, ESM vs CJS, tree shaking, code splitting |
 
 ## Reading Order
 

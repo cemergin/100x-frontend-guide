@@ -7,7 +7,7 @@
 
 # Appendix C: Reading List
 
-> 50+ essential articles, talks, papers, and tools — curated for the 100x frontend architect.
+> 100+ essential articles, talks, papers, and tools — curated for the 100x frontend architect.
 
 Each entry includes a one-line summary and a link. Organized by topic, ordered by impact within each section.
 
@@ -329,6 +329,202 @@ Each entry includes a one-line summary and a link. Organized by topic, ordered b
 
 ---
 
-*Total: 66 resources. Last updated: 2026-04-07.*
+## Authentication & Authorization
+
+67. **"Clerk Documentation"** — Clerk
+    Drop-in authentication with pre-built UI components, session management, and multi-factor auth for Next.js and React.
+    [clerk.com/docs](https://clerk.com/docs)
+
+68. **"Auth.js v5 Guide"** — Auth.js
+    The successor to NextAuth.js — framework-agnostic authentication with support for OAuth, credentials, and magic links.
+    [authjs.dev](https://authjs.dev/)
+
+69. **"The Complete Guide to OAuth 2.0 and PKCE"** — Auth0
+    End-to-end walkthrough of the OAuth 2.0 authorization code flow with PKCE, the standard for SPAs and native apps.
+    [auth0.com/docs/get-started/authentication-and-authorization-flow/authorization-code-flow-with-pkce](https://auth0.com/docs/get-started/authentication-and-authorization-flow/authorization-code-flow-with-pkce)
+
+70. **"Web Authentication API (WebAuthn)"** — MDN Web Docs
+    Reference for the WebAuthn API — passwordless authentication using biometrics, security keys, and passkeys.
+    [developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API)
+
+---
+
+## Database & ORM
+
+71. **"Drizzle ORM Documentation"** — Drizzle Team
+    TypeScript-first ORM with SQL-like query syntax, zero dependencies, and excellent edge runtime support.
+    [orm.drizzle.team](https://orm.drizzle.team/)
+
+72. **"Neon Serverless Postgres Documentation"** — Neon
+    Serverless Postgres with branching, autoscaling to zero, and a WebSocket-based driver for edge functions.
+    [neon.tech/docs](https://neon.tech/docs)
+
+73. **"Prisma vs Drizzle: A Practical Comparison"** — Various Engineering Blogs
+    Head-to-head comparison of the two leading TypeScript ORMs — API design, performance, migration workflows, and edge compatibility.
+    [orm.drizzle.team/docs/prisma](https://orm.drizzle.team/docs/prisma)
+
+---
+
+## GraphQL
+
+74. **"Apollo Client Documentation"** — Apollo GraphQL
+    Full-featured GraphQL client for React with normalized caching, optimistic UI, and local state management.
+    [apollographql.com/docs/react](https://www.apollographql.com/docs/react/)
+
+75. **"Production Ready GraphQL"** — Marc-André Giroux (Book)
+    The definitive guide to building GraphQL APIs at scale — schema design, pagination, error handling, and performance.
+    [productionreadygraphql.com](https://productionreadygraphql.com/)
+
+76. **"GraphQL at Scale: How Netflix Uses Federation"** — Netflix Tech Blog
+    How Netflix uses GraphQL Federation to compose a unified API from hundreds of microservices.
+    [netflixtechblog.com/how-netflix-scales-its-api-with-graphql-federation](https://netflixtechblog.com/how-netflix-scales-its-api-with-graphql-federation-part-1-ae3557c187e2)
+
+---
+
+## Search
+
+77. **"Algolia Documentation"** — Algolia
+    Hosted search API with typo tolerance, faceting, and instant results. The standard for product and content search.
+    [algolia.com/doc](https://www.algolia.com/doc/)
+
+78. **"Postgres Full-Text Search is Good Enough"** — Rachid Belaid
+    Practical guide to implementing full-text search with PostgreSQL — tsvector, tsquery, ranking, and indexing without external services.
+    [rachbelaid.com/postgres-full-text-search-is-good-enough](http://rachbelaid.com/postgres-full-text-search-is-good-enough/)
+
+---
+
+## Feature Flags
+
+79. **"Statsig Documentation"** — Statsig
+    Feature flags, A/B testing, and product analytics with statistical rigor. Includes server and client SDKs.
+    [docs.statsig.com](https://docs.statsig.com/)
+
+80. **"Feature Flags Best Practices"** — LaunchDarkly
+    Comprehensive guide to feature flag lifecycle management — naming conventions, flag debt, progressive rollouts, and kill switches.
+    [launchdarkly.com/blog/feature-flag-best-practices](https://launchdarkly.com/blog/feature-flag-best-practices/)
+
+---
+
+## Real-time
+
+81. **"Socket.io Documentation"** — Socket.io
+    Event-driven library for real-time bidirectional communication with automatic reconnection and fallback transports.
+    [socket.io/docs](https://socket.io/docs/v4/)
+
+82. **"Collaborative Editing with CRDTs"** — Martin Kleppmann
+    Academic yet accessible explanation of Conflict-free Replicated Data Types for building real-time collaborative editors.
+    [martin.kleppmann.com/papers/crdt-book-chapter.pdf](https://martin.kleppmann.com/2020/07/06/crdt-hard-parts-hydra.html)
+
+83. **"Liveblocks Documentation"** — Liveblocks
+    Real-time collaboration infrastructure — presence, storage, comments, and notifications with React hooks.
+    [liveblocks.io/docs](https://liveblocks.io/docs)
+
+---
+
+## Analytics
+
+84. **"PostHog Documentation"** — PostHog
+    Open-source product analytics with event tracking, session replay, feature flags, and A/B testing in a single platform.
+    [posthog.com/docs](https://posthog.com/docs)
+
+85. **"Building an Analytics Pipeline"** — Various Engineering Blogs
+    Patterns for building event collection, processing, and warehousing pipelines — from client instrumentation to data lake.
+    [posthog.com/blog/analytics-pipeline](https://posthog.com/blog)
+
+---
+
+## Email
+
+86. **"Resend Documentation"** — Resend
+    Modern email API built for developers with React component support, deliverability tools, and webhook events.
+    [resend.com/docs](https://resend.com/docs)
+
+87. **"React Email"** — React Email
+    Build and preview email templates using React components — bridging the gap between modern DX and HTML email constraints.
+    [react.email](https://react.email/)
+
+88. **"Email Deliverability Guide"** — Postmark
+    Everything you need to know about email deliverability — SPF, DKIM, DMARC, reputation management, and bounce handling.
+    [postmarkapp.com/guides/email-deliverability](https://postmarkapp.com/guides/email-deliverability)
+
+---
+
+## SSR & Cookies
+
+89. **"Understanding Cookies in Next.js"** — Next.js Documentation
+    How to read, set, and manage cookies in Server Components, Route Handlers, Server Actions, and Middleware.
+    [nextjs.org/docs/app/api-reference/functions/cookies](https://nextjs.org/docs/app/api-reference/functions/cookies)
+
+90. **"Authentication in Server Components"** — Next.js Patterns
+    Patterns for session management, token validation, and role-based access in the App Router's server-first model.
+    [nextjs.org/docs/app/building-your-application/authentication](https://nextjs.org/docs/app/building-your-application/authentication)
+
+91. **"HTTP Cookies"** — MDN Web Docs
+    Complete reference for cookie attributes — SameSite, Secure, HttpOnly, Path, Domain, and partitioned cookies.
+    [developer.mozilla.org/en-US/docs/Web/HTTP/Cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies)
+
+---
+
+## UX & Design
+
+92. **"Human Interface Guidelines: Designing for iPhone"** — Apple
+    Apple's official design guidance covering layout, navigation, typography, color, and platform conventions for mobile.
+    [developer.apple.com/design/human-interface-guidelines](https://developer.apple.com/design/human-interface-guidelines/)
+
+93. **"Material Design 3 Guidelines"** — Google
+    Google's latest design system with adaptive layouts, dynamic color, and component specifications for cross-platform apps.
+    [m3.material.io](https://m3.material.io/)
+
+94. **"Don't Make Me Think, Revisited"** — Steve Krug (Book)
+    The classic usability book — intuitive navigation, visual hierarchy, and the art of removing friction from every interaction.
+    [sensible.com/dont-make-me-think](https://sensible.com/dont-make-me-think/)
+
+95. **"Refactoring UI"** — Adam Wathan & Steve Schoger (Book)
+    Tactical design advice for developers — spacing, typography, color, depth, and layout decisions that make UI look professional.
+    [refactoringui.com](https://www.refactoringui.com/)
+
+---
+
+## Performance (Extended)
+
+96. **"Core Web Vitals"** — web.dev (Google Chrome Team)
+    Comprehensive guides to LCP, INP, and CLS — what they measure, why they matter, and how to optimize each metric.
+    [web.dev/explore/learn-core-web-vitals](https://web.dev/explore/learn-core-web-vitals)
+
+97. **"Performance Budgets 101"** — web.dev
+    How to define, enforce, and monitor performance budgets — preventing regressions before they ship.
+    [web.dev/articles/performance-budgets-101](https://web.dev/articles/performance-budgets-101)
+
+---
+
+## Bonus: Foundational References
+
+98. **"React Documentation"** — React Team
+    The official React docs with interactive examples. Covers components, hooks, Server Components, and escape hatches.
+    [react.dev](https://react.dev/)
+
+99. **"MDN Web Docs"** — Mozilla
+    The single most important web reference. HTML, CSS, JavaScript, Web APIs — comprehensive, accurate, and always current.
+    [developer.mozilla.org](https://developer.mozilla.org/)
+
+100. **"The Pragmatic Programmer"** — David Thomas & Andrew Hunt (Book)
+     Timeless software engineering wisdom — DRY, orthogonality, tracer bullets, and the broken window theory applied to code.
+     [pragprog.com/titles/tpp20](https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/)
+
+101. **"System Design Interview"** — Alex Xu (Book)
+     Step-by-step framework for designing scalable systems — load balancers, caches, databases, and message queues explained clearly.
+     [bytebytego.com](https://bytebytego.com/)
+
+102. **"A Comprehensive Guide to Error Handling in React"** — Kent C. Dodds
+     Error boundaries, try/catch in Server Components, and user-friendly error recovery patterns.
+     [kentcdodds.com/blog/use-react-error-boundary](https://kentcdodds.com/blog/use-react-error-boundary-to-handle-errors-in-react)
+
+103. **"CSS for JavaScript Developers"** — Josh W. Comeau
+     Deep understanding of CSS layout, stacking contexts, and animations — taught from a JavaScript developer's mental model.
+     [css-for-js.dev](https://css-for-js.dev/)
+
+---
+
+*Total: 103 resources. Last updated: 2026-04-07.*
 
 > **See also:** [Appendix A: Glossary](./appendix-glossary.md) | [Appendix B: Cheat Sheet](./appendix-cheatsheet.md)
