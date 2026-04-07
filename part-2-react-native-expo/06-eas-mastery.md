@@ -1371,6 +1371,108 @@ async function checkForCriticalUpdate() {
 }
 ```
 
+### 6.4.9 Error Recovery — What Happens When an Update Crashes
+
+This is the section most guides skip, and it's arguably the most important one. Because here's the nightmare scenario: you ship an OTA update, it contains a crash-on-launch bug, and now every user who downloads it is stuck in a crash loop with no way to open the app. Game over, right?
+
+**Wrong.** `expo-updates` has built-in error recovery, and it's one of the most thoughtfully designed safety nets in mobile development. Understanding how it works turns EAS Update from "scary magic that can brick your app" into "a safe, reliable delivery mechanism."
+
+**The Three-Tier Safety Net:**
+
+```
+Tier 1: Latest OTA Update
+  ↓ (crashes on launch?)
+Tier 2: Previous Successfully-Loaded Update  
+  ↓ (also crashes?)
+Tier 3: Embedded Bundle (baked into the binary at build time)
+```
+
+**How it works in detail:**
+
+When `expo-updates` loads an update and the app crashes during startup, the library detects this on the next launch attempt. It then **automatically rolls back** to the previous known-good update. If that also fails, it falls back to the **embedded bundle** — the JS bundle that was compiled into the binary during `eas build`.
+
+The detection mechanism:
+
+1. When `expo-updates` loads an update, it marks it as "pending."
+2. If the app successfully starts and renders without crashing within a short window (the "launch success" signal), the update is promoted to "successful."
+3. If the app crashes before reaching that point, on next launch, `expo-updates` sees a "pending" update that never became "successful" — it treats this as a failed update and rolls back.
+
+```
+Launch → Load update A (mark as pending) → App crashes
+  ↓
+Re-launch → Detect failed update A → Load previous update B
+  ↓
+If B also fails → Load embedded bundle (from binary)
+```
+
+**What "launch success" means:**
+
+The `expo-updates` library considers an update successful when `Updates.setExtraParam()` is called or when the app runs without a fatal JS error for a configured timeout period. You can explicitly signal success in your app:
+
+```typescript
+import * as Updates from 'expo-updates';
+
+// In your root component, after initial render succeeds:
+useEffect(() => {
+  if (!__DEV__) {
+    // Signal that this update loaded successfully
+    // This prevents automatic rollback
+    Updates.setExtraParam('updateSuccess', 'true');
+  }
+}, []);
+```
+
+**Configuring error recovery behavior:**
+
+```json
+{
+  "expo": {
+    "updates": {
+      "checkAutomatically": "ON_ERROR_RECOVERY",
+      "fallbackToCacheTimeout": 3000
+    }
+  }
+}
+```
+
+`"ON_ERROR_RECOVERY"` is a special mode: the app **only** checks for new updates when it's recovering from a failed update. This means normal app usage never triggers update downloads — only crash recovery does. This is the ultimate safety net: if your current update crashes, the app recovers AND checks if you've published a fix.
+
+`"fallbackToCacheTimeout"` controls how long the app waits for an update to download before falling back to the cached/embedded bundle. Set this to 0 for instant launch (always use cache, update in background) or higher values if you want to ensure users get the latest on every launch (at the cost of a loading delay).
+
+**The embedded bundle guarantee:**
+
+This is the key insight: **the embedded bundle is always there.** It's compiled into the binary during `eas build`. It's the bundle that corresponds to the code at the time of the build. No matter how badly you mess up an OTA update, the embedded bundle is a fallback that will always work (because it was tested during the build process).
+
+This is why the fingerprint system is so important. If the fingerprint matches, the OTA update is guaranteed to be compatible with the native code, which means the embedded bundle and the OTA bundle are interchangeable at the native layer.
+
+**The complete update lifecycle with error recovery:**
+
+```
+App Launch
+  │
+  ├─ Is there a "pending" update that crashed last time?
+  │    ├─ YES → Roll back to previous successful update
+  │    │         If no previous update → use embedded bundle
+  │    │         If checkAutomatically == ON_ERROR_RECOVERY → also check for new updates
+  │    └─ NO → Continue
+  │
+  ├─ Load the current update (or embedded bundle if no updates)
+  │
+  ├─ Check for new updates (if checkAutomatically == ON_LOAD)
+  │    ├─ Update available → download in background
+  │    └─ No update → done
+  │
+  ├─ App runs successfully → mark current update as "successful"
+  │
+  └─ On next launch → if a downloaded update is waiting, load it
+```
+
+**War story: The crash loop that wasn't**
+
+A team shipped an OTA update with a broken import — the app crashed immediately on launch. They panicked, expecting angry user reviews. But when they checked their Crashlytics: zero new crash reports from production users. Why? `expo-updates` had automatically rolled everyone back to the previous successful update. The broken update never stuck. They published a fix via `eas update`, and users silently received it on the next launch cycle. Total user impact: zero.
+
+**This is the difference between EAS Update and raw code push solutions.** The error recovery system means OTA updates are safe by default. You still need to test your updates, but the blast radius of a bad update is fundamentally limited.
+
 ---
 
 ## 6.5 App Store and Google Play Deployment Best Practices
