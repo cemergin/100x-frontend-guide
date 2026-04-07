@@ -144,6 +144,87 @@ You are NOT creating a JavaScript object. You are asking the browser's C++ engin
 
 This is why "DOM manipulation is slow" — not because the DOM objects themselves are slow, but because the boundary crossing and the side effects (layout, paint) are expensive.
 
+### 2.1b WebIDL: The Binding Language
+
+WebIDL deserves a closer look because it's the specification language that defines how JavaScript talks to every browser API — not just the DOM, but also Canvas, WebGL, Fetch, WebSocket, Audio, and hundreds more.
+
+Here's what an actual WebIDL definition looks like (simplified from the spec):
+
+```webidl
+interface HTMLDivElement : HTMLElement {
+  // HTMLDivElement inherits from HTMLElement, which inherits
+  // from Element, which inherits from Node, which inherits
+  // from EventTarget. This is a C++ class hierarchy.
+};
+
+interface Element : Node {
+  readonly attribute DOMString tagName;
+  DOMString getAttribute(DOMString name);
+  undefined setAttribute(DOMString name, DOMString value);
+  boolean hasAttribute(DOMString name);
+  undefined removeAttribute(DOMString name);
+  HTMLCollection getElementsByTagName(DOMString name);
+  // ... dozens more methods
+};
+
+interface Node : EventTarget {
+  readonly attribute unsigned short nodeType;
+  readonly attribute Node? parentNode;
+  readonly attribute NodeList childNodes;
+  Node appendChild(Node node);
+  Node removeChild(Node child);
+  Node cloneNode(optional boolean deep = false);
+  // ...
+};
+```
+
+The browser's code generator reads these WebIDL files and produces:
+- C++ class definitions (the actual implementation)
+- JavaScript wrapper classes (the objects you interact with in JS)
+- Binding code that marshals calls between the two
+
+When you write `element.setAttribute("class", "active")`, the JavaScript engine:
+1. Looks up `setAttribute` on the element's JS wrapper prototype
+2. Finds the binding function generated from WebIDL
+3. Converts the JavaScript string `"class"` to a C++ `WTF::String` (WebKit's string type)
+4. Calls `Element::setAttribute(AtomicString("class"), AtomicString("active"))` in C++
+5. C++ stores the attribute, marks styles as dirty
+
+Understanding this binding layer explains several things:
+- **Why DOM access is slower than plain JS object access** -- there's a binding layer in between
+- **Why some DOM properties are expensive to read** -- `offsetHeight`, `getBoundingClientRect()`, and other layout-dependent properties force synchronous layout calculation
+- **Why React Native's JSI is the same concept** -- JSI is a C++ binding that lets JavaScript hold references to native objects, just like WebIDL lets JavaScript hold references to DOM objects
+- **Why web standards move slowly** -- every new API requires WebIDL definitions, binding code generation, and cross-browser implementation in C++
+
+### 2.1c The document Object
+
+`document` is not a JavaScript variable. It's a global binding provided by the browser through WebIDL. It's a handle to the C++ `Document` object that owns the entire DOM tree.
+
+```javascript
+// These are all cross-boundary C++ calls:
+document.getElementById("app")      // Searches the C++ tree by ID hash
+document.querySelector(".card")     // Runs CSS selector matching in C++
+document.querySelectorAll("li")     // Returns a NodeList (live C++ collection)
+document.createElement("div")      // Allocates a C++ HTMLDivElement
+document.createTextNode("hello")   // Allocates a C++ Text node
+document.createDocumentFragment()  // Creates a lightweight container
+```
+
+**DocumentFragment** deserves special mention. It's a virtual container that exists in memory but not in the DOM tree. You can append elements to a fragment without triggering any layout or paint, then append the fragment to the DOM in one operation:
+
+```javascript
+// Efficient batch insertion using DocumentFragment
+const fragment = document.createDocumentFragment();
+for (let i = 0; i < 1000; i++) {
+  const li = document.createElement("li");
+  li.textContent = `Item ${i}`;
+  fragment.appendChild(li); // no layout triggered
+}
+container.appendChild(fragment); // ONE layout calculation for all 1000 items
+```
+
+This is the pre-React way of batching DOM operations. React's virtual DOM achieves the same result automatically — you never need to think about DocumentFragments because the commit phase batches all DOM operations.
+
 ### 2.2 The Connection to React Native's JSI
 
 If this sounds familiar, it should. In Chapter 1, you'll learn about JSI (JavaScript Interface) — React Native's C++ layer that lets JavaScript hold references to native C++ objects and call methods on them directly.
@@ -754,6 +835,40 @@ New:  [X(key=0), A(key=1), B(key=2), C(key=3)]
 
 Use a stable, unique identifier (database ID, UUID) as the key.
 
+### 4.5b Key Performance in Practice
+
+Let's trace what happens with a real list operation to understand why keys matter for performance, not just correctness:
+
+```jsx
+// State before: items = [{ id: "a", text: "Apple" }, { id: "b", text: "Banana" }, { id: "c", text: "Cherry" }]
+// State after:  items = [{ id: "b", text: "Banana" }, { id: "c", text: "Cherry" }, { id: "a", text: "Apple" }]
+// (moved "Apple" from first to last)
+```
+
+**Without keys (position-based):**
+```
+Position 0: "Apple" --> "Banana"  (UPDATE text content)
+Position 1: "Banana" --> "Cherry" (UPDATE text content)
+Position 2: "Cherry" --> "Apple"  (UPDATE text content)
+Total: 3 DOM text updates
+```
+
+React updates all three elements because the content at each position changed. It doesn't know that these are the same elements in a different order.
+
+If each list item has internal state (like a checkbox), that state is now associated with the wrong item. Position 0's checkbox state (which belonged to "Apple") now belongs to "Banana."
+
+**With keys:**
+```
+key="a": moved from position 0 to position 2 (DOM MOVE)
+key="b": moved from position 1 to position 0 (DOM MOVE)
+key="c": stayed at position 1 (no change)
+Total: 2 DOM move operations, 0 content updates
+```
+
+React identifies each element by key, sees they've been reordered, and uses DOM move operations (`insertBefore`) instead of content updates. State is preserved correctly because each key maps to the same component instance.
+
+DOM moves are often cheaper than content updates because the browser doesn't need to recalculate text layout — it just repositions existing elements in the tree.
+
 ### 4.6 React's Diffing Assumptions
 
 React's diffing algorithm is O(n) — linear time — because it makes two simplifying assumptions:
@@ -1063,6 +1178,94 @@ useEffect(() => {
 The cleanup function closes over the same `cancelled` variable as the fetch callback. When the effect re-runs (because `query` changed), the cleanup from the previous run sets `cancelled = true`, and the previous fetch's `.then` callback sees `cancelled` as `true` and skips the state update.
 
 This is closures solving a real asynchronous problem — race condition prevention through shared mutable state inside a closure scope.
+
+### 6.5 The Complete Hook Mental Model
+
+Let's put everything together with a full trace of what happens when a component with hooks renders:
+
+```jsx
+function SearchPage() {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState([]);
+  const inputRef = useRef(null);
+  
+  useEffect(() => {
+    if (query.length < 3) return;
+    
+    let cancelled = false;
+    searchAPI(query).then(data => {
+      if (!cancelled) setResults(data);
+    });
+    return () => { cancelled = true; };
+  }, [query]);
+  
+  return (
+    <div>
+      <input
+        ref={inputRef}
+        value={query}
+        onChange={e => setQuery(e.target.value)}
+      />
+      <ul>
+        {results.map(r => <li key={r.id}>{r.title}</li>)}
+      </ul>
+    </div>
+  );
+}
+```
+
+**Render 1 (mount):**
+
+1. React calls `SearchPage()`. A new execution context is created.
+2. `useState("")` -- hook index 0. No previous value. Returns `["", setQuery]`.
+3. `useState([])` -- hook index 1. No previous value. Returns `[[], setResults]`.
+4. `useRef(null)` -- hook index 2. Creates `{ current: null }`.
+5. `useEffect(callback, [query])` -- hook index 3. No previous deps. Marks effect as "needs to run."
+6. JSX is returned. React creates the virtual DOM tree.
+7. React commits: creates real DOM elements, attaches the ref (`inputRef.current = <input element>`).
+8. Browser paints the initial UI.
+9. React runs the effect: `query` is `""`, length < 3, so the early return fires. No API call.
+
+**User types "rea":**
+
+10. `onChange` fires. `setQuery("rea")` is called. React marks `SearchPage` for re-render.
+11. React calls `SearchPage()` again. New execution context.
+12. `useState("")` -- hook index 0. Previous value exists: `"rea"`. Returns `["rea", setQuery]`.
+13. `useState([])` -- hook index 1. Previous value: `[]`. Returns `[[], setResults]`.
+14. `useRef(null)` -- hook index 2. Returns the same `{ current: <input> }` object.
+15. `useEffect(callback, ["rea"])` -- hook index 3. Previous deps: `[""]`. `"rea" !== ""`, so effect needs to re-run.
+16. JSX returned with `query = "rea"`. React diffs. Only the input's value attribute changed. One DOM operation.
+17. Browser paints.
+18. React runs cleanup from render 1's effect (none -- it returned early without a cleanup).
+19. React runs render 2's effect: `query` is `"rea"`, length >= 3. `searchAPI("rea")` fires. `cancelled = false` in this closure.
+
+**User types "react" (before API responds):**
+
+20. `setQuery("react")` triggers another re-render.
+21. Same hook sequence. `useEffect` deps change from `["rea"]` to `["react"]`.
+22. Before running the new effect, React runs the cleanup from render 2: `cancelled = true`.
+23. When `searchAPI("rea")` eventually resolves, it checks `cancelled` -- it's `true`, so `setResults` is NOT called. No stale data.
+24. React runs render 3's effect: `searchAPI("react")` fires with a fresh `cancelled = false`.
+
+This trace shows every concept from Chapters 0 and 0b working together: closures (each render's effect captures its own `query` and `cancelled`), the event loop (effects run after paint, API calls are asynchronous), the virtual DOM (only changed DOM nodes are updated), and one-way data flow (input event flows up to state, state flows down to UI).
+
+### 6.6 Why "Thinking in Closures" Changes Everything
+
+Once you internalize that every render creates new closures, debugging React becomes systematic:
+
+**Bug: "My value is stale in the callback"**
+Diagnosis: The callback closed over an old render's value. Fix: use a ref, functional updater, or add the value to the dependency array.
+
+**Bug: "My effect runs every render"**
+Diagnosis: A dependency is a new object/function reference every render. Fix: memoize the dependency, move it inside the effect, or restructure to use a stable value.
+
+**Bug: "My state update doesn't seem to work"**
+Diagnosis: You're reading state from the closure (stale), not from React's storage. Fix: use the functional updater form `setState(prev => ...)`.
+
+**Bug: "My event handler has the wrong state"**
+Diagnosis: The handler closed over state from the render when it was created. In most cases React's batching handles this correctly, but if you're reading state after an async operation, it's stale. Fix: use a ref to track the latest value, or restructure to avoid reading state asynchronously.
+
+Every single one of these is a closure problem. Not a React problem, not a hook problem — a closure problem. Chapter 0 gave you the tools to understand closures. This chapter showed you how hooks are closures. Now you can diagnose any hook-related bug by tracing the closure chain.
 
 ---
 
