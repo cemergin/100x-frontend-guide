@@ -260,6 +260,115 @@ Real numbers from production apps referenced across these guides:
 
 ---
 
+## Concept Cross-Index
+
+Find where each concept is covered across all guides:
+
+| Concept | Primary Guide | Also Covered In |
+|---------|--------------|----------------|
+| **JSI (JavaScript Interface)** | [Ch 1](./part-1-foundations/01-react-native-internals.md) | [Ch 13](./part-4-architecture-at-scale/13-mobile-performance.md), [Ch 14](./part-4-architecture-at-scale/14-profiling-debugging.md) |
+| **Fabric Renderer** | [Ch 1](./part-1-foundations/01-react-native-internals.md) | [Ch 3](./part-1-foundations/03-rendering-pipeline.md), [Ch 13](./part-4-architecture-at-scale/13-mobile-performance.md) |
+| **TurboModules** | [Ch 1](./part-1-foundations/01-react-native-internals.md) | [Ch 5](./part-2-react-native-expo/05-expo-platform.md), [Ch 13](./part-4-architecture-at-scale/13-mobile-performance.md) |
+| **Hermes Engine** | [Ch 1](./part-1-foundations/01-react-native-internals.md) | [Ch 5](./part-2-react-native-expo/05-expo-platform.md), [Ch 14](./part-4-architecture-at-scale/14-profiling-debugging.md) |
+| **New Architecture (Bridgeless)** | [Ch 1](./part-1-foundations/01-react-native-internals.md) | [Ch 5](./part-2-react-native-expo/05-expo-platform.md), [Ch 13](./part-4-architecture-at-scale/13-mobile-performance.md) |
+| **Cold Start Optimization** | [Ch 13](./part-4-architecture-at-scale/13-mobile-performance.md) | [Ch 1](./part-1-foundations/01-react-native-internals.md), [Ch 23](./part-5-deployment-operations/23-metrics.md) |
+| **Threading Model (RN)** | [Ch 1](./part-1-foundations/01-react-native-internals.md) | [Ch 3](./part-1-foundations/03-rendering-pipeline.md), [Ch 8](./part-2-react-native-expo/08-styling-animation.md) |
+| **CNG (Continuous Native Generation)** | [Ch 5](./part-2-react-native-expo/05-expo-platform.md) | [Ch 6](./part-2-react-native-expo/06-eas-mastery.md), [Ch 15](./part-4-architecture-at-scale/15-monorepo.md) |
+| **Expo Prebuild** | [Ch 5](./part-2-react-native-expo/05-expo-platform.md) | [Ch 6](./part-2-react-native-expo/06-eas-mastery.md), [Ch 18](./part-4-architecture-at-scale/18-cicd.md) |
+| **Config Plugins** | [Ch 5](./part-2-react-native-expo/05-expo-platform.md) | [Ch 6](./part-2-react-native-expo/06-eas-mastery.md), [Ch 22](./part-5-deployment-operations/22-security.md) |
+| **EAS Build** | [Ch 6](./part-2-react-native-expo/06-eas-mastery.md) | [Ch 18](./part-4-architecture-at-scale/18-cicd.md), [Ch 5](./part-2-react-native-expo/05-expo-platform.md) |
+| **EAS Update (OTA)** | [Ch 6](./part-2-react-native-expo/06-eas-mastery.md) | [Ch 18](./part-4-architecture-at-scale/18-cicd.md), [Ch 20](./part-5-deployment-operations/20-monitoring.md) |
+| **Channels & Branches (EAS)** | [Ch 6](./part-2-react-native-expo/06-eas-mastery.md) | [Ch 18](./part-4-architecture-at-scale/18-cicd.md) |
+| **Fingerprint (EAS)** | [Ch 6](./part-2-react-native-expo/06-eas-mastery.md) | [Ch 18](./part-4-architecture-at-scale/18-cicd.md) |
+| **Error Recovery (OTA)** | [Ch 6](./part-2-react-native-expo/06-eas-mastery.md) | [Ch 20](./part-5-deployment-operations/20-monitoring.md) |
+| **React Server Components** | [Ch 25](./part-6-vercel-web/25-nextjs-app-router.md) | [Ch 3](./part-1-foundations/03-rendering-pipeline.md), [Ch 0c](./part-0-fundamentals/00c-react-fundamentals.md) |
+| **Hooks (useState, useEffect, etc.)** | [Ch 0c](./part-0-fundamentals/00c-react-fundamentals.md) | [Ch 9](./part-3-state-data-communication/09-state-management.md), [Ch 3](./part-1-foundations/03-rendering-pipeline.md) |
+| **Fiber Architecture** | [Ch 3](./part-1-foundations/03-rendering-pipeline.md) | [Ch 1](./part-1-foundations/01-react-native-internals.md), [Ch 13](./part-4-architecture-at-scale/13-mobile-performance.md) |
+| **Reconciliation & Diffing** | [Ch 3](./part-1-foundations/03-rendering-pipeline.md) | [Ch 0b](./part-0-fundamentals/00b-ui-development-hard-parts.md), [Ch 13](./part-4-architecture-at-scale/13-mobile-performance.md) |
+| **React Compiler** | [Ch 3](./part-1-foundations/03-rendering-pipeline.md) | [Ch 5](./part-2-react-native-expo/05-expo-platform.md), [Ch 13](./part-4-architecture-at-scale/13-mobile-performance.md) |
+| **Suspense & Streaming** | [Ch 25](./part-6-vercel-web/25-nextjs-app-router.md) | [Ch 3](./part-1-foundations/03-rendering-pipeline.md), [Ch 10](./part-3-state-data-communication/10-data-fetching.md) |
+| **Discriminated Unions** | [Ch 0d](./part-0-fundamentals/00d-typescript-mastery.md) | [Ch 4](./part-1-foundations/04-typescript-at-scale.md), [Ch 9](./part-3-state-data-communication/09-state-management.md) |
+| **Generics (TypeScript)** | [Ch 0d](./part-0-fundamentals/00d-typescript-mastery.md) | [Ch 4](./part-1-foundations/04-typescript-at-scale.md), [Ch 10](./part-3-state-data-communication/10-data-fetching.md) |
+| **Branded Types** | [Ch 4](./part-1-foundations/04-typescript-at-scale.md) | [Ch 0d](./part-0-fundamentals/00d-typescript-mastery.md) |
+| **Zod Schema Validation** | [Ch 0d](./part-0-fundamentals/00d-typescript-mastery.md) | [Ch 4](./part-1-foundations/04-typescript-at-scale.md), [Ch 10](./part-3-state-data-communication/10-data-fetching.md) |
+| **tRPC** | [Ch 0d](./part-0-fundamentals/00d-typescript-mastery.md) | [Ch 10](./part-3-state-data-communication/10-data-fetching.md), [Ch 15](./part-4-architecture-at-scale/15-monorepo.md) |
+| **Project References (TS)** | [Ch 4](./part-1-foundations/04-typescript-at-scale.md) | [Ch 0d](./part-0-fundamentals/00d-typescript-mastery.md), [Ch 15](./part-4-architecture-at-scale/15-monorepo.md) |
+| **Zustand** | [Ch 9](./part-3-state-data-communication/09-state-management.md) | [Ch 17](./part-4-architecture-at-scale/17-testing.md), [Ch 13](./part-4-architecture-at-scale/13-mobile-performance.md) |
+| **TanStack Query** | [Ch 10](./part-3-state-data-communication/10-data-fetching.md) | [Ch 9](./part-3-state-data-communication/09-state-management.md), [Ch 17](./part-4-architecture-at-scale/17-testing.md) |
+| **Jotai** | [Ch 9](./part-3-state-data-communication/09-state-management.md) | [Ch 13](./part-4-architecture-at-scale/13-mobile-performance.md) |
+| **MMKV** | [Ch 11](./part-3-state-data-communication/11-caching.md) | [Ch 9](./part-3-state-data-communication/09-state-management.md), [Ch 22](./part-5-deployment-operations/22-security.md) |
+| **Optimistic Updates** | [Ch 10](./part-3-state-data-communication/10-data-fetching.md) | [Ch 12](./part-3-state-data-communication/12-offline-realtime.md) |
+| **Three-Category State Model** | [Ch 9](./part-3-state-data-communication/09-state-management.md) | [Ch 10](./part-3-state-data-communication/10-data-fetching.md), [Appendix B](./appendices/appendix-cheatsheet.md) |
+| **FlashList** | [Ch 13](./part-4-architecture-at-scale/13-mobile-performance.md) | [Ch 8](./part-2-react-native-expo/08-styling-animation.md), [Ch 14](./part-4-architecture-at-scale/14-profiling-debugging.md) |
+| **Reanimated** | [Ch 8](./part-2-react-native-expo/08-styling-animation.md) | [Ch 13](./part-4-architecture-at-scale/13-mobile-performance.md), [Ch 7](./part-2-react-native-expo/07-navigation.md) |
+| **Bundle Size Optimization** | [Ch 13](./part-4-architecture-at-scale/13-mobile-performance.md) | [Ch 5](./part-1-foundations/05-build-toolchain.md), [Ch 23](./part-5-deployment-operations/23-metrics.md) |
+| **Memory Leaks** | [Ch 14](./part-4-architecture-at-scale/14-profiling-debugging.md) | [Ch 13](./part-4-architecture-at-scale/13-mobile-performance.md), [Ch 23](./part-5-deployment-operations/23-metrics.md) |
+| **FPS & Jank** | [Ch 23](./part-5-deployment-operations/23-metrics.md) | [Ch 13](./part-4-architecture-at-scale/13-mobile-performance.md), [Ch 14](./part-4-architecture-at-scale/14-profiling-debugging.md) |
+| **Monorepo (Turborepo)** | [Ch 15](./part-4-architecture-at-scale/15-monorepo.md) | [Ch 18](./part-4-architecture-at-scale/18-cicd.md), [Ch 4](./part-1-foundations/04-typescript-at-scale.md) |
+| **Microfrontends** | [Ch 19](./part-4-architecture-at-scale/19-fe-architecture.md) | [Ch 15](./part-4-architecture-at-scale/15-monorepo.md) |
+| **BFF (Backend for Frontend)** | [Ch 19](./part-4-architecture-at-scale/19-fe-architecture.md) | [Ch 10](./part-3-state-data-communication/10-data-fetching.md), [Ch 25](./part-6-vercel-web/25-nextjs-app-router.md) |
+| **Design Systems** | [Ch 16](./part-4-architecture-at-scale/16-design-systems.md) | [Ch 8](./part-2-react-native-expo/08-styling-animation.md), [Ch 15](./part-4-architecture-at-scale/15-monorepo.md) |
+| **Feature-Based Structure** | [Ch 19](./part-4-architecture-at-scale/19-fe-architecture.md) | [Ch 15](./part-4-architecture-at-scale/15-monorepo.md), [Ch 7](./part-2-react-native-expo/07-navigation.md) |
+| **Vercel Platform** | [Ch 24](./part-6-vercel-web/24-vercel-platform.md) | [Ch 25](./part-6-vercel-web/25-nextjs-app-router.md), [Ch 18](./part-4-architecture-at-scale/18-cicd.md) |
+| **Next.js App Router** | [Ch 25](./part-6-vercel-web/25-nextjs-app-router.md) | [Ch 24](./part-6-vercel-web/24-vercel-platform.md), [Ch 19](./part-4-architecture-at-scale/19-fe-architecture.md) |
+| **Self-Hosting (AWS)** | [Ch 19](./part-4-architecture-at-scale/19-fe-architecture.md) | [Ch 24](./part-6-vercel-web/24-vercel-platform.md) |
+| **CI/CD & GitHub Actions** | [Ch 18](./part-4-architecture-at-scale/18-cicd.md) | [Ch 6](./part-2-react-native-expo/06-eas-mastery.md), [Ch 15](./part-4-architecture-at-scale/15-monorepo.md) |
+| **Sentry** | [Ch 20](./part-5-deployment-operations/20-monitoring.md) | [Ch 14](./part-4-architecture-at-scale/14-profiling-debugging.md), [Ch 28](./part-6-vercel-web/28-beast-mode.md) |
+| **Crashlytics** | [Ch 20](./part-5-deployment-operations/20-monitoring.md) | [Ch 21](./part-5-deployment-operations/21-firebase.md), [Ch 23](./part-5-deployment-operations/23-metrics.md) |
+| **Crash-Free Rate** | [Ch 20](./part-5-deployment-operations/20-monitoring.md) | [Ch 23](./part-5-deployment-operations/23-metrics.md), [Ch 28](./part-6-vercel-web/28-beast-mode.md) |
+| **ANR (App Not Responding)** | [Ch 20](./part-5-deployment-operations/20-monitoring.md) | [Ch 23](./part-5-deployment-operations/23-metrics.md), [Ch 14](./part-4-architecture-at-scale/14-profiling-debugging.md) |
+| **Source Maps** | [Ch 20](./part-5-deployment-operations/20-monitoring.md) | [Ch 5](./part-1-foundations/05-build-toolchain.md), [Ch 14](./part-4-architecture-at-scale/14-profiling-debugging.md) |
+| **OWASP Mobile Top 10** | [Ch 22](./part-5-deployment-operations/22-security.md) | [Ch 24](./part-5-deployment-operations/24-payments.md) |
+| **OAuth2 PKCE** | [Ch 22](./part-5-deployment-operations/22-security.md) | [Ch 10](./part-3-state-data-communication/10-data-fetching.md) |
+| **Certificate Pinning** | [Ch 22](./part-5-deployment-operations/22-security.md) | [Ch 10](./part-3-state-data-communication/10-data-fetching.md) |
+| **Secure Storage** | [Ch 22](./part-5-deployment-operations/22-security.md) | [Ch 11](./part-3-state-data-communication/11-caching.md), [Ch 24](./part-5-deployment-operations/24-payments.md) |
+| **Stripe (PaymentIntents)** | [Ch 24](./part-5-deployment-operations/24-payments.md) | [Ch 25](./part-6-vercel-web/25-nextjs-app-router.md) |
+| **In-App Purchases (IAP)** | [Ch 24](./part-5-deployment-operations/24-payments.md) | [Ch 5](./part-2-react-native-expo/05-expo-platform.md) |
+| **RevenueCat** | [Ch 24](./part-5-deployment-operations/24-payments.md) | [Ch 6](./part-2-react-native-expo/06-eas-mastery.md) |
+| **Webhooks** | [Ch 24](./part-5-deployment-operations/24-payments.md) | [Ch 10](./part-3-state-data-communication/10-data-fetching.md), [Ch 25](./part-6-vercel-web/25-nextjs-app-router.md) |
+| **Event Loop & Microtasks** | [Ch 0](./part-0-fundamentals/00-javascript-hard-parts.md) | [Ch 1](./part-1-foundations/01-react-native-internals.md), [Ch 3](./part-1-foundations/03-rendering-pipeline.md) |
+| **Closures & Prototypes** | [Ch 0](./part-0-fundamentals/00-javascript-hard-parts.md) | [Ch 0c](./part-0-fundamentals/00c-react-fundamentals.md) |
+| **Virtual DOM & Diffing** | [Ch 0b](./part-0-fundamentals/00b-ui-development-hard-parts.md) | [Ch 3](./part-1-foundations/03-rendering-pipeline.md), [Ch 13](./part-4-architecture-at-scale/13-mobile-performance.md) |
+| **Bundlers (Metro, Vite, Turbopack)** | [Ch 5](./part-1-foundations/05-build-toolchain.md) | [Ch 15](./part-4-architecture-at-scale/15-monorepo.md), [Ch 27](./part-6-vercel-web/27-dx-tooling.md) |
+| **Tree Shaking & Code Splitting** | [Ch 5](./part-1-foundations/05-build-toolchain.md) | [Ch 13](./part-4-architecture-at-scale/13-mobile-performance.md), [Ch 25](./part-6-vercel-web/25-nextjs-app-router.md) |
+| **Expo Router (File-Based Routing)** | [Ch 7](./part-2-react-native-expo/07-navigation.md) | [Ch 5](./part-2-react-native-expo/05-expo-platform.md), [Ch 25](./part-6-vercel-web/25-nextjs-app-router.md) |
+| **Deep Linking** | [Ch 7](./part-2-react-native-expo/07-navigation.md) | [Ch 5](./part-2-react-native-expo/05-expo-platform.md), [Ch 22](./part-5-deployment-operations/22-security.md) |
+| **NativeWind / Tailwind** | [Ch 8](./part-2-react-native-expo/08-styling-animation.md) | [Ch 16](./part-4-architecture-at-scale/16-design-systems.md) |
+| **Offline-First & CRDTs** | [Ch 12](./part-3-state-data-communication/12-offline-realtime.md) | [Ch 11](./part-3-state-data-communication/11-caching.md), [Ch 9](./part-3-state-data-communication/09-state-management.md) |
+| **WebSockets & Real-Time** | [Ch 12](./part-3-state-data-communication/12-offline-realtime.md) | [Ch 10](./part-3-state-data-communication/10-data-fetching.md), [Ch 26](./part-6-vercel-web/26-ai-frontend.md) |
+| **Testing (Jest, Maestro, Playwright)** | [Ch 17](./part-4-architecture-at-scale/17-testing.md) | [Ch 18](./part-4-architecture-at-scale/18-cicd.md), [Ch 9](./part-3-state-data-communication/09-state-management.md) |
+| **AI SDK & AI Features** | [Ch 26](./part-6-vercel-web/26-ai-frontend.md) | [Ch 24](./part-6-vercel-web/24-vercel-platform.md), [Ch 27](./part-6-vercel-web/27-dx-tooling.md) |
+| **Edge Computing & CDN** | [Ch 11](./part-3-state-data-communication/11-caching.md) | [Ch 24](./part-6-vercel-web/24-vercel-platform.md), [Ch 25](./part-6-vercel-web/25-nextjs-app-router.md) |
+| **Firebase (Analytics, Remote Config)** | [Ch 21](./part-5-deployment-operations/21-firebase.md) | [Ch 20](./part-5-deployment-operations/20-monitoring.md), [Ch 23](./part-5-deployment-operations/23-metrics.md) |
+| **Core Web Vitals** | [Ch 2](./part-1-foundations/02-browser-rendering.md) | [Ch 23](./part-5-deployment-operations/23-metrics.md), [Ch 25](./part-6-vercel-web/25-nextjs-app-router.md) |
+| **Browser Rendering Pipeline** | [Ch 2](./part-1-foundations/02-browser-rendering.md) | [Ch 3](./part-1-foundations/03-rendering-pipeline.md), [Ch 13](./part-4-architecture-at-scale/13-mobile-performance.md) |
+| **Beast Mode (Operational Readiness)** | [Ch 28](./part-6-vercel-web/28-beast-mode.md) | [Ch 20](./part-5-deployment-operations/20-monitoring.md), [Ch 23](./part-5-deployment-operations/23-metrics.md) |
+
+---
+
+## Interactive Learning with AI
+
+The [`course/`](./course/) directory contains **60 hands-on modules** organized in 3 progressive loops that build on this guide:
+
+| Loop | Modules | Focus | TicketFlow Arc |
+|------|---------|-------|----------------|
+| **Loop 1: Foundation** | L1-M01 to L1-M20 | Core mental models, heavy scaffolding | Empty folder to simple Expo app with basic screens, navigation, and first EAS build |
+| **Loop 2: Practice** | L2-M01 to L2-M20 | Intermediate patterns, moderate scaffolding | Basic app to full-featured app with API integration, state management, testing, CI/CD, and monitoring |
+| **Loop 3: Mastery** | L3-M01 to L3-M20 | Architect-level decisions, minimal scaffolding | Single app to production-ready monorepo with web dashboard, design system, Vercel deployment, AI features, and operational readiness |
+
+**Running project:** Throughout all 60 modules, you build **TicketFlow** -- an event discovery and ticketing app (think Resident Advisor meets Eventbrite) with React Native (Expo) for mobile and a Next.js web dashboard, deployed via EAS and Vercel from a Turborepo monorepo.
+
+**How to start:** Use the [tech-skill-builder](https://github.com/anthropics/claude-code-plugins) plugin for Claude Code:
+```bash
+# Start from the beginning
+/learn course/course.yaml
+
+# Jump to a specific module
+/learn course/course.yaml --module L2-M05
+```
+
+---
+
 ## Key Principles
 
 1. **The best architecture is the simplest one that solves actual problems** — don't microfrontend a two-person team's codebase
