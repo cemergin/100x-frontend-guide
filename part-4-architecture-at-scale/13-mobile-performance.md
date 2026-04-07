@@ -1,5 +1,5 @@
 <!--
-  CHAPTER: 13
+  CHAPTER: 14
   TITLE: Performance Optimization — Mobile
   PART: IV — Architecture at Scale
   PREREQS: Chapters 1, 3
@@ -14,6 +14,17 @@
 > — Every PM you've ever worked with, and they're right
 
 ---
+
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- Target cold start under 1.5s, 60fps scrolling, JS thread frame time under 16ms, and memory under 200MB; these are not aspirational -- they are the floor for a production mobile app
+- FlashList replaces FlatList for virtualized lists; it recycles cell components instead of mounting/unmounting, cutting list rendering time dramatically on long lists
+- Bundle size directly affects cold start and app store conversion; set a 15MB compressed budget, measure it in CI, and block PRs that exceed it
+- The React Compiler auto-memoizes renders, but you still need to understand re-render triggers to avoid unnecessary work in hot paths
+- Always profile on a low-end Android device (not your development iPhone); the 10x hardware gap between a $50 phone and a $1200 phone is where your performance bugs live
+
+</details>
 
 Let me tell you about a moment that changed how I think about mobile performance. We shipped a feature-complete React Native app to production. Beautiful UI. Clean architecture. Comprehensive test coverage. The client loved it in demo.
 

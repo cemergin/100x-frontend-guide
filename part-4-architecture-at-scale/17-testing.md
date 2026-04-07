@@ -1,5 +1,5 @@
 <!--
-  CHAPTER: 17
+  CHAPTER: 18
   TITLE: Testing Strategy — What to Test, How to Test, When to Stop
   PART: IV — Architecture at Scale
   PREREQS: Chapters 5, 9
@@ -11,6 +11,17 @@
 # Chapter 17: Testing Strategy — What to Test, How to Test, When to Stop
 
 > **Part IV — Architecture at Scale** | Prerequisites: Chapters 5, 9 | Difficulty: Intermediate
+
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- The testing trophy replaces the pyramid: invest most in integration tests (RNTL, MSW), fewer unit tests, fewer E2E tests, and almost zero snapshot tests
+- React Native Testing Library tests behavior (what the user sees and does), not implementation details; query by text, role, or test ID -- never by component internals
+- Mock Service Worker (MSW) intercepts network requests at the handler level, giving you realistic API mocking without stubbing `fetch` or Axios
+- Maestro is winning mobile E2E because of YAML-based flows, built-in waiting, and reliable CI execution; use it for critical user journeys (login, checkout, onboarding)
+- Stop testing third-party library internals, stop maintaining brittle snapshots, and stop chasing 100% coverage; test the user flows that would wake you up at 3 AM if they broke
+
+</details>
 
 Here's the dirty secret about testing in frontend: **most teams either test too little or test the wrong things.** The team with zero tests ships bugs to production and puts out fires every sprint. The team with 3,000 snapshot tests has a green CI badge and *still* ships bugs to production — they just also spend 45 minutes waiting for tests to run and another hour updating snapshots every time someone changes a font size.
 

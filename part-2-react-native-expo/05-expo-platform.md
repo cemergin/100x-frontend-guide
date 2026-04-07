@@ -1,5 +1,5 @@
 <!--
-  CHAPTER: 5
+  CHAPTER: 6
   TITLE: Expo: The Modern React Native Platform
   PART: II — React Native & Expo
   PREREQS: Chapter 1
@@ -2250,7 +2250,7 @@ The combination of Expo (this chapter) and EAS (next chapter) gives you a comple
 | **Config plugins** | Declarative native customization. Write TypeScript, not XML. |
 | **App config** | Use `app.config.ts`, not `app.json`. Dynamic, typed, environment-aware. |
 | **Expo Modules API** | Modern native modules in Swift/Kotlin. Low barrier, high capability. |
-| **SDK 54** | React Compiler (83% adoption), expo-image, expo-router v4, stable New Architecture. |
+| **SDK 52** | React Compiler (83% adoption), expo-image, expo-router v4, stable New Architecture. |
 | **Managed vs. bare** | The distinction is nearly gone. CNG + config plugins give you native customization without bare-workflow maintenance. |
 | **When NOT to use Expo** | Brownfield apps, custom build systems, teams with heavy native investment. ~5% of projects. |
 

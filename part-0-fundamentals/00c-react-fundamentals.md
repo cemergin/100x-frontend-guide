@@ -12,6 +12,17 @@
 
 > **Part 0 — JavaScript & React Fundamentals** | Prerequisites: Chapters 0, 0b | Difficulty: Beginner to Intermediate
 
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- JSX compiles to function calls (`React.createElement` or the automatic runtime); understanding this prevents mystifying errors
+- `useState` is a closure over an array index -- React stores state in a hidden linked list on the Fiber node, not inside your component
+- `useEffect` runs after paint, cleans up before the next run, and its dependency array controls when it fires; getting dependencies wrong causes infinite loops or stale closures
+- Memoization (`React.memo`, `useMemo`, `useCallback`) only helps when you have measured a re-render problem; premature memoization adds complexity for no gain
+- React 19 introduces `use()`, Server Components, Server Actions, `useOptimistic`, and `useFormStatus` -- a fundamental shift toward server-first rendering
+
+</details>
+
 You now understand JavaScript's execution model — closures, the event loop, promises, prototypes. You understand why UI development is hard — the DOM is C++, data binding is the central problem, and the virtual DOM is React's solution. This chapter connects everything: React's actual API, explained through the lens of the fundamentals you've already mastered.
 
 Most React tutorials teach you to memorize the API. "useState returns a value and a setter." "useEffect runs after render." "useCallback memoizes a function." These statements are true and completely useless for building production applications. They tell you WHAT but not WHY. They don't explain why your effect runs in an infinite loop, why your memoization doesn't help performance, or why your context re-renders everything.

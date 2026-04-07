@@ -1,5 +1,5 @@
 <!--
-  CHAPTER: 25
+  CHAPTER: 28
   TITLE: Next.js App Router — The Complete Picture
   PART: VI — Vercel & the Web
   PREREQS: Chapter 24
@@ -11,6 +11,17 @@
 # Chapter 25: Next.js App Router — The Complete Picture
 
 ---
+
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- The App Router is not "Pages Router with a different folder structure"; it is an architecture change where components render on the server by default and ship zero JS to the client
+- Server Components can directly access databases, file systems, and environment variables; use `'use client'` only for components that need interactivity (state, effects, event handlers)
+- Data fetching happens directly in Server Components with `await` -- no `useEffect`, no loading states for initial data, no API routes to wire up
+- The caching model uses `use cache`, `cacheLife`, and `cacheTag` directives for fine-grained control; Partial Prerendering (PPR) combines static shells with streaming dynamic content
+- Layouts persist across navigations (no remount), templates remount on every navigation; parallel routes and intercepting routes enable advanced patterns like modals and split views
+
+</details>
 
 Let me be blunt with you: if you're still thinking about the App Router as "Pages Router but with a different folder structure," you're going to have a bad time. I've watched teams migrate to the App Router and fail — not because the API is hard, but because they never updated their mental model. They kept trying to write Pages Router code in `app/` and wondered why everything felt wrong.
 
@@ -1373,7 +1384,7 @@ export default function PostNotFound() {
 
 ### The Cache Model: A Fresh Start
 
-Next.js has gone through several iterations of its caching model. The current approach (as of Next.js 15+) centers on the `use cache` directive, `cacheLife`, `cacheTag`, and `updateTag`. If you learned the older `unstable_cache` API or the `fetch` cache options, the new model is simpler and more predictable.
+Next.js has gone through several iterations of its caching model. The current approach (as of Next.js 15+) centers on the `use cache` directive, `cacheLife`, `cacheTag`, and `revalidateTag`. If you learned the older `unstable_cache` API or the `fetch` cache options, the new model is simpler and more predictable.
 
 ### The `use cache` Directive
 
@@ -1414,7 +1425,7 @@ Key points about `use cache`:
 - It can be placed at the top of an async function or an async component
 - The function's arguments become the cache key (they must be serializable)
 - The cached result is stored and reused according to the `cacheLife` profile
-- Tags allow targeted invalidation via `updateTag`
+- Tags allow targeted invalidation via `revalidateTag`
 
 ### `cacheLife` -- Controlling TTL
 
@@ -1497,7 +1508,7 @@ async function getProductListing(categoryId: string) {
 }
 ```
 
-### `cacheTag` and `updateTag` -- Surgical Invalidation
+### `cacheTag` and `revalidateTag` -- Surgical Invalidation
 
 Tags let you invalidate specific cache entries without path-based revalidation:
 
@@ -1523,22 +1534,22 @@ async function getProductReviews(productId: string) {
 ```tsx
 // Invalidating cached data (in a Server Action)
 'use server'
-import { updateTag } from 'next/cache'
+import { revalidateTag } from 'next/cache'
 
 export async function updateProduct(id: string, data: ProductUpdate) {
   await db.products.update({ where: { id }, data })
 
   // Invalidate this specific product's cache
-  updateTag(`product-${id}`)
+  revalidateTag(`product-${id}`)
   // Also invalidate the product listing cache
-  updateTag('products')
+  revalidateTag('products')
 }
 
 export async function addReview(productId: string, review: ReviewInput) {
   await db.reviews.create({ data: { ...review, productId } })
 
   // Invalidate reviews for this product
-  updateTag(`product-${productId}-reviews`)
+  revalidateTag(`product-${productId}-reviews`)
 }
 ```
 
@@ -1655,7 +1666,7 @@ With this setup:
 - The 100 most popular posts are built at deploy time (fast for users, no cold start)
 - Other posts are generated on-demand and cached
 - The cache revalidates on the schedule set by `cacheLife`
-- You can force-revalidate with `updateTag('post-my-slug')` when content is edited
+- You can force-revalidate with `revalidateTag('post-my-slug')` when content is edited
 
 ### On-Demand Revalidation with Webhooks
 
@@ -1663,7 +1674,7 @@ The real power of ISR comes from on-demand revalidation. When a CMS editor publi
 
 ```tsx
 // app/api/revalidate/route.ts
-import { updateTag } from 'next/cache'
+import { revalidateTag } from 'next/cache'
 
 export async function POST(request: Request) {
   const secret = request.headers.get('x-revalidation-secret')
@@ -1677,12 +1688,12 @@ export async function POST(request: Request) {
   // CMS sends: { type: 'post', slug: 'my-new-post' }
   switch (body.type) {
     case 'post':
-      updateTag(`post-${body.slug}`)
-      updateTag('posts') // Also revalidate the listing
+      revalidateTag(`post-${body.slug}`)
+      revalidateTag('posts') // Also revalidate the listing
       break
     case 'product':
-      updateTag(`product-${body.id}`)
-      updateTag('products')
+      revalidateTag(`product-${body.id}`)
+      revalidateTag('products')
       break
   }
 
@@ -2761,7 +2772,7 @@ Each piece has its place. Server Components for data. Client Components for inte
 
 3. **Streaming is free performance.** Wrap slow data fetches in `<Suspense>` boundaries. The user sees the page shell instantly.
 
-4. **The caching model is declarative.** Use `'use cache'` with `cacheLife` and `cacheTag` for fine-grained caching. Use `updateTag` for surgical invalidation.
+4. **The caching model is declarative.** Use `'use cache'` with `cacheLife` and `cacheTag` for fine-grained caching. Use `revalidateTag` for surgical invalidation.
 
 5. **PPR is the future.** Static shells with dynamic holes. Near-zero TTFB with fresh data. Use it.
 

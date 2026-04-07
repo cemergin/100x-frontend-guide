@@ -12,6 +12,17 @@
 
 > **Part 0 — JavaScript & React Fundamentals** | Prerequisites: None | Difficulty: Beginner to Intermediate
 
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- JavaScript runs on a single thread with one call stack; understanding execution contexts, closures, and the event loop is the foundation of every React performance bug you will ever debug
+- Closures are not an interview trick -- they are the mechanism behind `useState`, `useEffect`, and every custom hook you will write
+- The event loop processes microtasks (Promises) before macrotasks (setTimeout); getting this wrong causes stale state and race conditions
+- Async/await is syntactic sugar over generators and promises; understanding the desugaring lets you predict execution order in complex flows
+- Prototypes and `this` still matter in React Native internals, native module bindings, and library code you will need to read
+
+</details>
+
 Here's an uncomfortable truth that most frontend engineers never confront: **you don't actually know how JavaScript works.**
 
 You know how to *use* JavaScript. You know how to write React components, handle events, fetch data, and push code to production. But if I asked you to trace exactly what happens when the JavaScript engine encounters `setTimeout(() => console.log('hello'), 0)` — the full picture, including which C++ subsystem the browser delegates to, which queue the callback enters, and why it prints *after* a synchronous `console.log('world')` that appears later in the code — most engineers stumble.

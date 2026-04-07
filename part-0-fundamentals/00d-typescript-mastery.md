@@ -12,6 +12,18 @@
 
 > **Part 0 — JavaScript & React Fundamentals** | Prerequisites: Chapter 0 | Difficulty: Beginner to Advanced
 
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- TypeScript eliminates ~70% of production JavaScript bugs at compile time; treat it as a type system, not "JS with annotations"
+- Structural typing means shape matters, not name; discriminated unions make impossible states unrepresentable and are the most important pattern in frontend TS
+- Generics with constraints let you build APIs that guide callers toward correct usage through types alone
+- Conditional types, mapped types, and template literals enable type-level programming -- powerful for library authors, use sparingly in application code
+- Zod bridges runtime validation and compile-time types; use it at every system boundary (API responses, form inputs, environment variables)
+- Strict mode (`strict: true` in tsconfig) is non-negotiable; start with it or migrate to it early
+
+</details>
+
 Here's a number for you: **70% of JavaScript bugs in production are type errors.** Not logic errors, not race conditions, not off-by-one mistakes — type errors. Calling a method on `undefined`. Passing a string where a number was expected. Accessing a property that doesn't exist because someone renamed it three weeks ago and the codebase has 400 files.
 
 TypeScript eliminates this entire category of bugs. Not reduces. *Eliminates.* And it does so before your code ever runs — at the moment you write it, in your editor, with a red squiggly line that says "hey, this is going to break."

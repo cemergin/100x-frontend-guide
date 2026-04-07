@@ -1,5 +1,5 @@
 <!--
-  CHAPTER: 16
+  CHAPTER: 17
   TITLE: Design Systems & Component Libraries
   PART: IV — Architecture at Scale
   PREREQS: Chapter 15
@@ -11,6 +11,17 @@
 # Chapter 16: Design Systems & Component Libraries
 
 > **Part IV — Architecture at Scale** | Prerequisites: Chapter 15 | Difficulty: Intermediate
+
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- Design tokens (color, spacing, typography, radii) are the atomic foundation; centralize them in a shared package and derive platform-specific values from one source of truth
+- Building a full design system from scratch is almost always wrong for small teams; adopt shadcn/ui for web, Tamagui or NativeWind for native, and build only the pieces unique to your product
+- The compound component pattern (composable sub-components like `<Select.Trigger>`, `<Select.Content>`) produces the most flexible and accessible component APIs
+- Accessibility is a first-class concern, not a retrofit; every interactive component needs keyboard navigation, screen reader labels, focus management, and sufficient color contrast
+- Storybook for React Native lets you develop and test components in isolation; wire it into CI for visual regression testing with Chromatic
+
+</details>
 
 Here's a truth that most teams learn the hard way: **the cost of not having a design system is invisible until it's catastrophic.** It shows up as twelve slightly different shades of blue across your app. It shows up as buttons that have 5px of padding on one screen and 8px on another. It shows up as a "quick redesign" that takes three months because every component was hand-crafted with inline styles that nobody fully understands.
 

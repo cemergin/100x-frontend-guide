@@ -12,6 +12,17 @@
 
 > **Part I — Foundations** | Prerequisites: Chapters 0, 0d | Difficulty: Intermediate to Advanced
 
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- Your TypeScript/JSX code cannot run anywhere directly; it goes through transpilation (TS/JSX to JS), bundling (resolving imports into one or more files), tree shaking, minification, and source map generation before it reaches a device
+- SWC and esbuild have largely replaced Babel for transpilation; Metro handles React Native bundling, Vite dominates web, and Turbopack is the Next.js default
+- Tree shaking eliminates dead code at build time but only works with ES modules; a single side-effectful barrel file can pull your entire dependency tree into the bundle
+- Source maps are what let you debug production crashes with real file names and line numbers; ship them to your error tracking service, not to your users
+- Hot Module Replacement swaps changed modules at runtime without losing component state; understanding its boundaries prevents the "why didn't my change show up" confusion
+
+</details>
+
 Here is the dirty secret of frontend engineering in 2026: **most developers have no idea what happens between the code they write and the code that runs.** They write TypeScript. They write JSX. They import from node_modules. They run `npm run build` and something comes out the other end. When it works, they don't think about it. When it breaks, they paste the error into a search engine and pray.
 
 This chapter ends that. We are going to open the black box — every step of it — from the `package.json` that defines your project to the final bytes that land on a phone or browser. You will understand what transpilation actually does, why there are six competing bundlers, how tree shaking decides what code lives and what code dies, why your source maps matter for crash reports at 3am, and how Hot Module Replacement makes your changes appear instantly without blowing away your application state.
@@ -965,7 +976,7 @@ __d(function(global, _$$_REQUIRE, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, ex
 }, 42, [0, 1]); // module ID 42, depends on modules 0 and 1
 ```
 
-**2. No tree shaking.** Metro does not perform tree shaking. If you import one function from a utility library, the entire module is included. This is one of the reasons barrel files (`index.ts` that re-exports everything) are especially problematic in React Native — they pull in every module they re-export.
+**2. Limited tree shaking.** Metro has experimental tree shaking support since RN 0.73+ (enabled via `experimentalImportSupport` in metro.config.js), but it's not as mature as web bundler tree shaking. For production apps, still avoid barrel files and use direct imports. Barrel files (`index.ts` that re-exports everything) are especially problematic in React Native — they pull in every module they re-export.
 
 **3. Lazy bundling in development.** In dev mode, Metro doesn't bundle your entire app upfront. It starts the server, and when the app requests the bundle, Metro resolves and transforms only the files needed for the entry point. As you navigate to new screens, Metro transforms those files on-demand. This is why `npx expo start` is fast even for large apps.
 

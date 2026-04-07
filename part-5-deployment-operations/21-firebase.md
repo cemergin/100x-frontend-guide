@@ -1,5 +1,5 @@
 <!--
-  CHAPTER: 21
+  CHAPTER: 23
   TITLE: Firebase Console Mastery
   PART: V — Deployment & Operations
   PREREQS: Chapter 20
@@ -11,6 +11,17 @@
 # Chapter 21: Firebase Console Mastery
 
 > **Part V — Deployment & Operations** | Prerequisites: Chapter 20 | Difficulty: Intermediate
+
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- Always use `@react-native-firebase` (native SDKs), not the Firebase JS SDK; the JS SDK cannot do Crashlytics, performance monitoring, or background push notifications
+- Crashlytics setup: enable debug symbols upload in EAS, add breadcrumbs and custom keys to crashes, wire alerts to Slack, and treat crash-free rate as a top-level KPI
+- Firebase Analytics with custom events (not just screen views) is what turns analytics from a vanity dashboard into a product decision tool; track funnels, retention, and conversion
+- Remote Config enables feature flags and A/B testing without app store updates; combine with staged rollouts for safe experimentation
+- FCM push notification setup requires platform-specific configuration (APNs for iOS, channels for Android); handle foreground, background, and quit-state delivery separately
+
+</details>
 
 Firebase is one of those platforms that teams either use brilliantly or terribly. There is almost no middle ground. The teams using it brilliantly have Crashlytics alerts wired to Slack, custom analytics events that actually inform product decisions, Remote Config driving feature flags without app updates, and performance monitoring catching regressions before users complain. The teams using it terribly installed it once for push notifications, never looked at the console, and have 47,000 unread crash reports.
 

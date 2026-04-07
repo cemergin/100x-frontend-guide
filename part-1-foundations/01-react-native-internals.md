@@ -12,6 +12,17 @@
 
 > **Part I — Foundations** | Prerequisites: None | Difficulty: Intermediate to Advanced
 
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- The old Bridge architecture serialized every JS-to-native call as JSON; the New Architecture (JSI, Fabric, TurboModules) eliminates the bridge entirely with synchronous C++ bindings
+- JSI lets JavaScript hold direct references to C++ host objects, enabling synchronous native calls -- this is what makes Reanimated worklets and fast gesture handling possible
+- Hermes compiles your JS to bytecode ahead of time, cutting cold start time nearly in half compared to JavaScriptCore
+- React Native uses three threads (JS, UI, Shadow); knowing which thread owns a bottleneck is the first step to fixing any performance problem
+- Bridgeless mode is the final evolution -- zero JSON serialization, zero async gaps, and the default for new projects since RN 0.76
+
+</details>
+
 Here's the thing about React Native that most tutorials skip entirely: **you are not writing a web app that runs on a phone.** You are writing JavaScript that orchestrates a native rendering engine, communicates across thread boundaries through a serialization layer, and manages memory in a garbage-collected VM running on hardware that can range from a $1,200 iPhone to a $50 Android phone with 2GB of RAM.
 
 Every performance bug you'll ever chase, every crash that makes no sense from the JavaScript layer, every animation that janks on low-end devices — the root cause lives in this chapter. The engineers who understand React Native's internals debug in hours what others spend weeks on. They make architecture decisions that prevent entire categories of problems. They look at a frame drop and know whether it's the JS thread, the UI thread, or the Shadow thread before they even open the profiler.

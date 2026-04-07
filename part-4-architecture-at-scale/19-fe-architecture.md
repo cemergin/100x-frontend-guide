@@ -1,5 +1,5 @@
 <!--
-  CHAPTER: 19
+  CHAPTER: 20
   TITLE: Frontend Architecture Patterns
   PART: IV — Architecture at Scale
   PREREQS: Chapters 4, 15
@@ -11,6 +11,17 @@
 # Chapter 19: Frontend Architecture Patterns
 
 > **Part IV — Architecture at Scale** | Prerequisites: Chapters 4, 15 | Difficulty: Advanced
+
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- There is no universally correct frontend architecture; there is only the one your team can ship with, maintain, and evolve -- choose based on team size, deployment cadence, and organizational structure
+- The frontend monolith is the right default for most teams; microfrontends make sense only when multiple autonomous teams need independent deploy cycles
+- Module Federation (Rsbuild/Rspack) enables runtime composition of independently deployed bundles; build-time composition in a monorepo gives the same code-sharing benefits with far less operational complexity
+- Feature-based file structure (group by domain, not by technical role) scales better than the classic `components/hooks/utils` split
+- Enforce architectural boundaries with ESLint boundary rules and dependency-cruiser; automated linting catches cross-boundary imports before code review
+
+</details>
 
 Here's the uncomfortable truth about frontend architecture: **there is no correct architecture.** There is only the architecture that your team can ship with, maintain without losing their minds, and evolve as requirements change. And that architecture is almost certainly not the one that looks coolest in a conference talk.
 

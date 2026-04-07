@@ -12,6 +12,17 @@
 
 > **Part I — Foundations** | Prerequisites: None | Difficulty: Intermediate
 
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- The browser rendering pipeline is: DOM parse -> CSSOM parse -> Layout -> Paint -> Composite; each stage has distinct performance costs
+- Reflow (layout recalculation) is expensive and cascades; avoid reading layout properties then writing styles in the same frame (layout thrashing)
+- Compositing on the GPU is the fast path; `transform` and `opacity` changes skip layout and paint entirely
+- Core Web Vitals (LCP, INP, CLS) are the metrics Google uses to rank your site; understanding which pipeline stage each measures tells you exactly how to fix them
+- Use `box-sizing: border-box` everywhere, understand margin collapsing, and know that `position: fixed` breaks inside a transformed parent
+
+</details>
+
 Let me tell you something that separates the senior frontend engineer from the rest of the pack: **understanding how the browser actually turns your code into pixels.** Not the hand-wavy "the browser parses HTML and renders it" explanation from your bootcamp. The real pipeline — from the moment a byte arrives over the network to the moment a photon leaves the user's display.
 
 Every time you wonder why your CSS animation stutters on mobile Safari, why a layout shift tanks your CLS score, why adding `will-change: transform` fixed one jank and caused another, or why `position: fixed` inside a transformed parent breaks — the answer lives in this chapter. The browser rendering pipeline is not a black box. It is a precisely ordered sequence of stages, each with its own performance characteristics, each with its own failure modes.

@@ -1,5 +1,5 @@
 <!--
-  CHAPTER: 6
+  CHAPTER: 7
   TITLE: EAS: Build, Submit, Update — The Complete Deployment Pipeline
   PART: II — React Native & Expo
   PREREQS: Chapter 5
@@ -13,6 +13,17 @@
 > "Shipping is your company's heartbeat. If it takes two weeks to push a hotfix, you don't have a deployment pipeline — you have a prayer chain."
 
 ---
+
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- EAS has three pillars: Build (cloud compile + signing), Submit (store upload automation), and Update (OTA JavaScript patches without store review)
+- EAS Update uses fingerprinting to detect native changes; if the fingerprint matches, you can push a JS-only OTA update in minutes instead of waiting days for store review
+- Configure build profiles in `eas.json` for development, preview, and production; use channels and branches to control which updates reach which users
+- EAS handles code signing (iOS provisioning profiles, Android keystores) in the cloud so you never need to manage certificates locally
+- Set up EAS Workflows to chain build, test, submit, and update steps into a single automated pipeline triggered by git push
+
+</details>
 
 ## Introduction
 

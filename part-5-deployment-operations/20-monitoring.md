@@ -1,5 +1,5 @@
 <!--
-  CHAPTER: 20
+  CHAPTER: 22
   TITLE: Mobile Monitoring & Observability
   PART: V — Deployment & Operations
   PREREQS: Chapters 1, 5
@@ -15,6 +15,17 @@
 > "If you didn't set up monitoring, you didn't ship it." — Every senior engineer who's been woken up at 3 AM
 
 ---
+
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- Set up Sentry (or Crashlytics) before your first deploy, not after your first incident; monitoring is a pre-launch requirement, not a post-launch activity
+- Track crash-free rate (target 99.5%+), ANR rate, and custom performance traces; set alerts on regressions so you find problems before users report them
+- Upload source maps and dSYMs to your error tracker in CI so crash reports show real file names and line numbers, not minified gibberish
+- Use React error boundaries to catch JS-layer crashes gracefully, log them with context (breadcrumbs, user ID, app version), and show a recovery UI instead of a white screen
+- Monitor every release for at least 48 hours after deploy; the person who wrote the code is the best person to triage its crashes
+
+</details>
 
 ## The Story That Changes How You Think About Monitoring
 

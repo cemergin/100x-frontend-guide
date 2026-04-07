@@ -12,6 +12,17 @@
 
 > **Part I — Foundations** | Prerequisites: None | Difficulty: Intermediate to Advanced
 
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- TypeScript type checking consumes 80%+ of compile time; barrel files, deep generics, and distributive conditional types are the usual culprits for slow builds
+- Use project references and composite builds to split type checking into independent, cacheable units across a monorepo
+- Kill barrel files (`index.ts` re-exports) -- they force the compiler to load entire dependency trees; use direct imports instead
+- Run `tsc --diagnostics` and `tsc --generateTrace` to find exactly what is slow; fix the bottleneck, not a guess
+- ESLint boundaries and dependency-cruiser enforce module boundaries at lint time, preventing the dependency tangles that make TypeScript slow in the first place
+
+</details>
+
 Here's a truth that nobody tells junior engineers: **TypeScript at 500 lines and TypeScript at 500,000 lines are completely different experiences.** At 500 lines, TypeScript is a helpful assistant that catches typos. At 500,000 lines, TypeScript is a build system, an architecture enforcement tool, and — if you're not careful — a 45-second tax on every keystroke in your editor.
 
 I've seen TypeScript codebases where the type checker takes 90 seconds to run. Where `tsc --watch` consumes 4GB of RAM. Where a single barrel file import pulls in 200 modules. Where the IDE autocomplete freezes for 10 seconds because a Zod schema creates a recursive type that blows up the type inference engine.

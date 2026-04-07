@@ -1,9 +1,9 @@
 <!--
-  CHAPTER: 23
+  CHAPTER: 25
   TITLE: Mobile Metrics That Matter
   PART: V — Deployment & Operations
   PREREQS: Chapter 20
-  KEY_TOPICS: TTI, cold start, FPS, jank measurement, memory usage, network latency, app size, Play Console vitals, ANR rate, crash rate, App Store Connect, Datadog RUM, dashboards, alert thresholds
+  KEY_TOPICS: TTI, FPS, memory, Play Console vitals, App Store Connect, Datadog RUM, dashboards, alerts
   DIFFICULTY: Intermediate
   UPDATED: 2026-04-07
 -->
@@ -12,967 +12,1123 @@
 
 > **Part V — Deployment & Operations** | Prerequisites: Chapter 20 | Difficulty: Intermediate
 
-Here's a scenario that plays out at every mobile-focused company: the team ships a feature, the product manager says "great, it looks good," and everyone moves on. Two weeks later, the app's rating drops from 4.5 to 4.2 stars. One-star reviews mention "the app is getting slower" and "it crashes when I open the camera." The team is confused — nothing changed, right? Nothing changed except 200ms of added cold start time from the new feature's initialization, a memory leak in the camera module that only triggers after 10 photos, and an ANR spike on Samsung Galaxy A-series phones because of a synchronous disk write on the main thread.
+> "Not everything that counts can be counted, and not everything that can be counted counts." — William Bruce Cameron
+>
+> "But in mobile, the things that count CAN be counted. So count them." — Me, after a P0 incident caused by a metric nobody was watching
 
-**You cannot fix what you cannot measure.** And in mobile development, the gap between what you *think* your app is doing and what it's *actually* doing on real devices, on real networks, with real battery levels, is enormous.
+---
 
-This chapter is about closing that gap. We're going to cover every metric that matters for a production mobile app, where to find those metrics, how to set up dashboards that give you visibility, and what thresholds should trigger alerts. By the end, you'll have a monitoring setup that tells you about problems before your users do.
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- Build a metrics dashboard on day one that covers cold start, FPS, memory, app size, crash-free rate, and network latency; if nobody is watching a metric, it will degrade silently
+- Google Play Console Vitals has hard thresholds (ANR > 0.47%, crash rate > 1.09%) that trigger search ranking penalties; monitor these weekly
+- App size directly impacts install conversion; apps over 150MB trigger a download warning on mobile data that can kill 25% of new installs
+- Use Datadog RUM (or similar) for real user monitoring that captures performance data from actual devices in the field, not just your test lab
+- Set alerts with meaningful thresholds and clear ownership; a dashboard nobody looks at is the same as no dashboard at all
+
+</details>
+
+## The Metric That Almost Killed an App
+
+Let me tell you about a team that shipped a beautiful React Native app. It looked gorgeous. The animations were smooth. The feature set was complete. The reviews were 4.5 stars.
+
+Then their Android installs started dropping. Not crashing — dropping. Fewer new installs every week, even though their marketing spend was the same. The PM spent three weeks blaming the ad creative. The designer redesigned the app store screenshots. Nothing helped.
+
+It took them six weeks to discover the actual cause: their app was 180MB. On the Google Play Store, apps over 150MB show a warning to users on mobile data. That warning was killing their conversion rate by an estimated 25%. The Play Console had been showing this data the entire time — under "App size" in the statistics tab. Nobody was looking.
+
+Six weeks. Tens of thousands of lost installs. Because nobody set up a dashboard that included app size as a metric.
+
+This chapter is the dashboard you should have built on day one. We'll cover every metric that matters for a mobile app, where to find it, what the thresholds are, and how to set up alerts so you never have to learn lessons the hard way.
 
 ### In This Chapter
-- The Metrics Mental Model — what to measure and why
-- Cold Start Time and TTI (Time to Interactive)
-- FPS and Jank Measurement
+- Cold Start / Time to Interactive (TTI)
+- FPS and Jank Detection
 - Memory Usage Tracking
-- Network Latency and Payload Size
-- App Size Optimization
-- Google Play Console Vitals
+- Network Latency Metrics
+- App Size and Download Impact
+- Google Play Console Vitals (with thresholds)
 - App Store Connect Metrics
 - Datadog RUM for Mobile
-- Setting Up Dashboards
-- Alert Thresholds and On-Call Practices
+- Building Dashboards That People Actually Look At
+- Alert Thresholds and On-Call
 
 ### Related Chapters
-- [Ch 13: Performance Optimization] — fixing the problems these metrics reveal
-- [Ch 14: Profiling & Debugging] — deep-diving into specific performance issues
-- [Ch 20: CI/CD for Mobile] — automating metric collection in your pipeline
-- [Ch 21: Error Tracking & Monitoring] — crash and error tracking
+- [Ch 20: Mobile Monitoring & Observability] — crash tracking, error reporting, Sentry/Crashlytics
+- [Ch 13: Performance Optimization] — how to fix the problems these metrics reveal
+- [Ch 6: EAS Mastery] — build configuration that affects app size
+- [Ch 21: Firebase] — Firebase Performance Monitoring integration
 
 ---
 
-## 1. THE METRICS MENTAL MODEL
+## 1. COLD START AND TIME TO INTERACTIVE
 
-Not all metrics are equal. Some tell you about the user's experience directly (how fast the app feels). Others tell you about the health of the system (how much memory is being used). Both matter, but for different reasons.
+Cold start is the first impression your app makes. It's the time from when the user taps the app icon to when they can interact with the first meaningful screen. Get this wrong and you've lost users before they've even seen your UI.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  USER-FACING METRICS (UX)                                    │
-│  These directly affect how the user perceives your app       │
-│                                                              │
-│  ┌─────────────────────────────────────────────────────────┐│
-│  │  Cold Start / TTI  — "How long until I can use it?"     ││
-│  │  FPS / Jank        — "Does it feel smooth?"             ││
-│  │  Network Latency   — "Does data load fast?"             ││
-│  │  Crash Rate        — "Does it crash?"                   ││
-│  │  ANR Rate          — "Does it freeze?"                  ││
-│  └─────────────────────────────────────────────────────────┘│
-│                                                              │
-│  SYSTEM HEALTH METRICS                                       │
-│  These predict future problems before users feel them        │
-│                                                              │
-│  ┌─────────────────────────────────────────────────────────┐│
-│  │  Memory Usage      — Trending up? Leak incoming.        ││
-│  │  App Size          — Growing? Users stop updating.      ││
-│  │  Battery Impact    — High? Users uninstall.             ││
-│  │  Network Usage     — Excessive? Users on metered plans. ││
-│  │  JS Bundle Size    — Growing? Cold start slowing.       ││
-│  └─────────────────────────────────────────────────────────┘│
-│                                                              │
-│  BUSINESS METRICS                                            │
-│  These connect technical performance to business outcomes    │
-│                                                              │
-│  ┌─────────────────────────────────────────────────────────┐│
-│  │  Session Duration   — Are users sticking around?        ││
-│  │  Funnel Conversion  — Are drops correlated with perf?   ││
-│  │  App Store Rating   — Is performance affecting reviews? ││
-│  │  Uninstall Rate     — Post-update uninstalls?           ││
-│  └─────────────────────────────────────────────────────────┘│
-└─────────────────────────────────────────────────────────────┘
-```
+### 1.1 What "Cold Start" Actually Means
 
-### The Golden Rule of Mobile Metrics
+There are three types of app start on both iOS and Android:
 
-**Segment everything by device class.** A p50 cold start of 1.2 seconds means nothing if your p90 on low-end Android is 4.5 seconds. Your users don't experience averages — they experience their specific device on their specific network.
+| Start Type | What Happens | Typical Time |
+|-----------|--------------|-------------|
+| **Cold Start** | App process doesn't exist. OS creates process, loads binary, runs initialization, renders first frame. | 1-5 seconds |
+| **Warm Start** | App process exists but activity was destroyed. Recreates activity, may need to reload some state. | 0.5-2 seconds |
+| **Hot Start** | App is in background, still in memory. Just brings it to foreground. | < 500ms |
 
-Segment by:
-- **Device tier**: High-end (iPhone 15, Pixel 8), Mid-range (Galaxy A54, Pixel 7a), Low-end (Galaxy A13, Redmi devices)
-- **OS version**: iOS 17 vs 16 vs 15, Android 14 vs 13 vs 12
-- **Network type**: WiFi, 5G, LTE, 3G
-- **Geography**: Network conditions vary dramatically by region
-- **App version**: Compare versions to detect regressions
+Cold start is the one you optimize for because it's the worst case — and it's what new users experience.
 
----
+### 1.2 Measuring Cold Start in React Native
 
-## 2. COLD START TIME AND TTI
-
-Cold start is the single most impactful performance metric for mobile apps. It's the first impression every time. Studies consistently show that every 100ms of startup time costs measurable engagement.
-
-### What Actually Happens During Cold Start
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│  COLD START TIMELINE (React Native, New Architecture)         │
-│                                                               │
-│  0ms    Process created by OS                                │
-│         ├── Native libraries loaded (libhermes, libjsi, etc) │
-│         ├── Application class initialized                    │
-│         └── Native modules registered                        │
-│                                                               │
-│  ~100ms Hermes engine initialized                            │
-│         ├── Bytecode bundle loaded (mmap from disk)          │
-│         └── Global scope executed                            │
-│                                                               │
-│  ~200ms React tree begins rendering                          │
-│         ├── Root component mounted                           │
-│         ├── Navigation initialized                           │
-│         └── Initial data fetched (or loaded from cache)      │
-│                                                               │
-│  ~400ms First meaningful paint                               │
-│         ├── Initial screen visible                           │
-│         └── Images begin loading                             │
-│                                                               │
-│  ~600ms Time to Interactive (TTI)                            │
-│         ├── Touch handlers registered                        │
-│         ├── Navigation functional                            │
-│         └── User can interact                                │
-│                                                               │
-│  Target: TTI < 1000ms on mid-range devices                   │
-│  Good:   TTI < 500ms on high-end devices                     │
-│  Bad:    TTI > 2000ms on any device                          │
-└──────────────────────────────────────────────────────────────┘
-```
-
-### Measuring Cold Start Time
+React Native cold start has multiple phases. You need to instrument each one:
 
 ```typescript
-// lib/startup-metrics.ts
+// src/performance/startup.ts
+
 import { PerformanceObserver } from 'react-native-performance';
 
-// Mark the earliest point you control
-// This goes in your entry file (index.js / App.tsx)
-const APP_START_TIME = global.performance?.now?.() ?? Date.now();
-
-export function measureStartupTime() {
-  // Native module launch time (if you have a custom native module)
-  const nativeLaunchTime = NativeModules.StartupModule?.getLaunchTimestamp?.();
-
-  return {
-    // Time from native app launch to JS execution start
-    nativeToJs: APP_START_TIME - (nativeLaunchTime ?? APP_START_TIME),
-    // Will be populated when we mark interactive
-    jsToInteractive: 0,
-    total: 0,
-  };
+class StartupTracker {
+  private marks: Record<string, number> = {};
+  private readonly startTime: number;
+  
+  constructor() {
+    // global.__startTime should be set in index.js, as early as possible
+    this.startTime = (global as any).__startTime || Date.now();
+  }
+  
+  mark(name: string) {
+    this.marks[name] = Date.now();
+  }
+  
+  getMetrics() {
+    const now = Date.now();
+    return {
+      // Total cold start time
+      totalColdStart: (this.marks['interactive'] || now) - this.startTime,
+      
+      // Phase breakdown
+      nativeInit: (this.marks['js_bundle_start'] || now) - this.startTime,
+      bundleLoad: (this.marks['js_bundle_end'] || 0) - (this.marks['js_bundle_start'] || 0),
+      appInit: (this.marks['app_render_start'] || 0) - (this.marks['js_bundle_end'] || 0),
+      firstRender: (this.marks['first_render'] || 0) - (this.marks['app_render_start'] || 0),
+      interactive: (this.marks['interactive'] || 0) - (this.marks['first_render'] || 0),
+    };
+  }
 }
 
-// Call this when your main screen is interactive
-export function markInteractive() {
-  const now = global.performance?.now?.() ?? Date.now();
-  const tti = now - APP_START_TIME;
-
-  analytics.track('app_tti', {
-    ttiMs: tti,
-    deviceModel: DeviceInfo.getModel(),
-    osVersion: DeviceInfo.getSystemVersion(),
-    appVersion: DeviceInfo.getVersion(),
-    isLowEndDevice: isLowEndDevice(),
-  });
-
-  console.log(`TTI: ${tti.toFixed(0)}ms`);
-}
-
-// In your main screen component:
-function HomeScreen() {
-  const [isReady, setIsReady] = useState(false);
-
-  useEffect(() => {
-    if (isReady) {
-      markInteractive();
-    }
-  }, [isReady]);
-
-  // Mark as ready when critical content is loaded
-  const { data } = useQuery({
-    queryKey: ['home-data'],
-    queryFn: fetchHomeData,
-    onSuccess: () => setIsReady(true),
-  });
-
-  // ...
-}
+export const startupTracker = new StartupTracker();
 ```
-
-### What Affects Cold Start (and How to Fix It)
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  COLD START FACTORS                                          │
-│                                                              │
-│  JS BUNDLE SIZE                                              │
-│  Impact: +1MB ≈ +100-200ms on mid-range devices             │
-│  Fix: Code splitting, lazy loading, tree shaking             │
-│  Measure: npx react-native-bundle-visualizer                │
-│                                                              │
-│  NATIVE MODULE INITIALIZATION                                │
-│  Impact: Each eager module adds 10-50ms                      │
-│  Fix: Lazy-load native modules (TurboModules)               │
-│  Measure: Trace NativeModule.init in Android Studio          │
-│                                                              │
-│  HERMES BYTECODE COMPILATION                                 │
-│  Impact: Pre-compiled bytecode saves 200-500ms              │
-│  Fix: Ensure Hermes is enabled + bytecode is precompiled    │
-│  Measure: Check for .hbc files in your bundle               │
-│                                                              │
-│  STATE REHYDRATION                                           │
-│  Impact: Loading persisted state from disk                   │
-│  Fix: Use MMKV (sync) instead of AsyncStorage (async)       │
-│  Measure: Time storage.get() calls on startup               │
-│                                                              │
-│  INITIAL DATA FETCH                                          │
-│  Impact: Network request before first render                 │
-│  Fix: Persist TanStack Query cache, show cached data first  │
-│  Measure: Time from render to data available                 │
-│                                                              │
-│  SPLASH SCREEN DURATION                                      │
-│  Impact: Perceived vs actual start time                      │
-│  Fix: Show splash until TTI, not until JS loads             │
-│  Measure: Time from splash hide to interactive              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Tracking Cold Start Trends Over Time
 
 ```typescript
-// This runs in your CI pipeline for every build
-// Using a performance testing device farm (Firebase Test Lab, AWS Device Farm)
+// index.js — the VERY FIRST LINE of your app
+(global as any).__startTime = Date.now();
 
-interface StartupBenchmark {
-  version: string;
-  buildNumber: number;
-  device: string;
-  coldStartMs: number;
-  ttiMs: number;
-  jsBundleSizeBytes: number;
-  timestamp: string;
+import { AppRegistry } from 'react-native';
+import { startupTracker } from './src/performance/startup';
+
+startupTracker.mark('js_bundle_start');
+
+// ... after imports are done
+startupTracker.mark('js_bundle_end');
+
+import App from './App';
+AppRegistry.registerComponent('MyApp', () => App);
+```
+
+```tsx
+// App.tsx
+import { startupTracker } from './src/performance/startup';
+
+function App() {
+  startupTracker.mark('app_render_start');
+  
+  useEffect(() => {
+    startupTracker.mark('first_render');
+    
+    // Wait for the first frame to be painted
+    requestAnimationFrame(() => {
+      startupTracker.mark('interactive');
+      
+      const metrics = startupTracker.getMetrics();
+      console.log('Startup metrics:', metrics);
+      
+      // Report to your analytics
+      analytics.track('app_cold_start', {
+        total_ms: metrics.totalColdStart,
+        native_init_ms: metrics.nativeInit,
+        bundle_load_ms: metrics.bundleLoad,
+        app_init_ms: metrics.appInit,
+        first_render_ms: metrics.firstRender,
+        interactive_ms: metrics.interactive,
+      });
+    });
+  }, []);
+  
+  return <RootNavigator />;
 }
+```
 
-// Store benchmarks and alert on regressions
-async function reportStartupBenchmark(benchmark: StartupBenchmark) {
-  // Compare with the previous version
-  const previousBenchmark = await getLastBenchmark(benchmark.device);
+### 1.3 Cold Start Thresholds
 
-  if (previousBenchmark) {
-    const regression = benchmark.ttiMs - previousBenchmark.ttiMs;
-    const regressionPercent = (regression / previousBenchmark.ttiMs) * 100;
+Here are the numbers you should be targeting:
 
-    if (regressionPercent > 10) {
-      await sendAlert({
-        severity: 'warning',
-        message: `TTI regression of ${regression.toFixed(0)}ms (${regressionPercent.toFixed(1)}%) on ${benchmark.device}`,
-        build: benchmark.buildNumber,
-      });
-    }
+| Metric | Good | Acceptable | Bad | Critical |
+|--------|------|-----------|-----|----------|
+| **Total cold start** | < 1s | 1-2s | 2-4s | > 4s |
+| **Native init** | < 200ms | 200-500ms | 500ms-1s | > 1s |
+| **JS bundle load** | < 300ms | 300-600ms | 600ms-1s | > 1s |
+| **First render** | < 300ms | 300-500ms | 500ms-1s | > 1s |
+| **Time to interactive** | < 1.5s | 1.5-3s | 3-5s | > 5s |
 
-    if (regressionPercent > 25) {
-      await sendAlert({
-        severity: 'critical',
-        message: `Major TTI regression: ${regression.toFixed(0)}ms on ${benchmark.device}. Consider blocking release.`,
-        build: benchmark.buildNumber,
-      });
-    }
-  }
+**Where these numbers come from:**
 
-  await saveBenchmark(benchmark);
+- Google's research shows that **53% of mobile users abandon a site/app that takes longer than 3 seconds to load.** This applies to apps too.
+- Apple's App Launch Time guideline says your app should be interactive within **400ms of the user tapping the icon** — though in practice, this is aspirational for React Native apps.
+- Google Play Console flags apps with cold start times above **5 seconds** as having a startup time issue.
+
+### 1.4 Common Cold Start Killers in React Native
+
+```typescript
+// KILLER 1: Importing everything at the top level
+// Every import in your entry file runs during startup
+
+// BAD — all of this runs before the first frame
+import { HeavyChartLibrary } from 'heavy-chart-library';
+import { PDFGenerator } from 'pdf-generator';
+import { VideoPlayer } from 'video-player';
+import { ARView } from 'ar-module';
+
+// GOOD — lazy import what you don't need immediately
+const HeavyChartLibrary = lazy(() => import('heavy-chart-library'));
+const PDFGenerator = lazy(() => import('pdf-generator'));
+
+// KILLER 2: Synchronous storage reads during init
+// BAD
+const token = MMKV.getString('auth_token');  // Blocks the JS thread
+const user = JSON.parse(MMKV.getString('user') || '{}');  // More blocking
+const settings = JSON.parse(MMKV.getString('settings') || '{}');
+
+// GOOD — defer non-critical reads
+const token = MMKV.getString('auth_token');  // Only read what's critical for first screen
+// Read the rest after first render
+
+// KILLER 3: Too many providers wrapping your app
+// Each provider's initialization runs before your first screen renders
+// BAD
+<Provider1>
+  <Provider2>
+    <Provider3>
+      <Provider4>
+        <Provider5>
+          <Provider6>
+            <App />  // This doesn't render until all 6 providers initialize
+          </Provider6>
+        </Provider5>
+      </Provider4>
+    </Provider3>
+  </Provider2>
+</Provider1>
+
+// GOOD — only wrap with providers needed for the first screen
+// Defer others with lazy loading
+```
+
+### 1.5 Measuring TTI in Production
+
+For real production measurement, use Firebase Performance Monitoring or a custom trace:
+
+```typescript
+import perf from '@react-native-firebase/perf';
+
+// Create a custom trace for cold start
+async function trackColdStart() {
+  const trace = await perf().newTrace('cold_start');
+  await trace.start();
+  
+  // Add metrics for each phase
+  trace.putMetric('native_init_ms', startupTracker.getMetrics().nativeInit);
+  trace.putMetric('bundle_load_ms', startupTracker.getMetrics().bundleLoad);
+  trace.putMetric('first_render_ms', startupTracker.getMetrics().firstRender);
+  
+  // Add attributes for segmentation
+  trace.putAttribute('device_tier', getDeviceTier());  // 'low', 'mid', 'high'
+  trace.putAttribute('app_version', getAppVersion());
+  trace.putAttribute('js_engine', global.HermesInternal ? 'hermes' : 'jsc');
+  
+  await trace.stop();
 }
 ```
 
 ---
 
-## 3. FPS AND JANK MEASUREMENT
+## 2. FPS AND JANK
 
-Frame rate is what makes apps feel "smooth" or "janky." On most devices, the target is 60 FPS (16.6ms per frame). On ProMotion iPhones and high-refresh Android displays, the target is 120 FPS (8.3ms per frame).
+Your app runs at 60 frames per second (or 120fps on ProMotion devices). That means each frame has a budget of **16.67ms** (or 8.33ms at 120fps). Miss that budget and you get jank — visible stuttering that makes your app feel broken.
 
-### What Causes Jank
+### 2.1 Understanding the Frame Budget
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│  A FRAME AT 60 FPS                                        │
-│                                                           │
-│  You have 16.6ms to:                                      │
-│  1. Run JavaScript (event handlers, state updates)        │
-│  2. Run React reconciliation (diffing)                    │
-│  3. Commit layout changes (Yoga layout calculation)       │
-│  4. Paint native views (platform rendering)               │
-│  5. Composite and display (GPU)                           │
-│                                                           │
-│  If any of these exceed 16.6ms → frame drop → jank        │
-│                                                           │
-│  COMMON CAUSES:                                            │
-│  • JS thread blocked (complex computation during scroll)  │
-│  • Too many re-renders (unnecessary React reconciliation) │
-│  • Heavy layout (deeply nested views)                     │
-│  • Large images (decoding on UI thread)                   │
-│  • Garbage collection pauses (Hermes GC)                  │
-└──────────────────────────────────────────────────────────┘
+60fps = 1000ms / 60 = 16.67ms per frame
+
+In that 16.67ms, the system needs to:
+1. Run your JS code (event handlers, state updates, rendering)
+2. Run layout calculations
+3. Run the UI thread (Yoga layout, view flattening)
+4. Composite and render to the screen
+
+Your JS code gets roughly 12ms of that budget.
+The rest goes to system overhead.
+
+At 120fps (ProMotion):
+1000ms / 120 = 8.33ms per frame
+Your JS code gets roughly 5-6ms.
 ```
 
-### Measuring FPS in Production
+### 2.2 Measuring FPS
 
 ```typescript
-// lib/fps-monitor.ts
-import { FrameCallbackRegistration } from 'react-native-reanimated';
+// src/performance/fps-monitor.ts
 
 class FPSMonitor {
   private frameCount = 0;
+  private lastTime = 0;
+  private fps = 60;
   private droppedFrames = 0;
-  private lastTimestamp = 0;
   private isRunning = false;
-  private samples: { fps: number; dropped: number; timestamp: number }[] = [];
-
+  private readonly callback: (fps: number, dropped: number) => void;
+  
+  constructor(callback: (fps: number, dropped: number) => void) {
+    this.callback = callback;
+  }
+  
   start() {
     this.isRunning = true;
-    this.lastTimestamp = performance.now();
+    this.lastTime = performance.now();
+    this.frameCount = 0;
     this.tick();
   }
-
+  
   stop() {
     this.isRunning = false;
-    return this.getSummary();
   }
-
-  private tick() {
+  
+  private tick = () => {
     if (!this.isRunning) return;
-
-    requestAnimationFrame(() => {
-      const now = performance.now();
-      const delta = now - this.lastTimestamp;
-
-      this.frameCount++;
-
-      // If frame took longer than 16.6ms, it's a dropped frame
-      if (delta > 16.7) {
-        const droppedCount = Math.floor(delta / 16.7) - 1;
-        this.droppedFrames += droppedCount;
-      }
-
-      // Record a sample every second
-      if (delta > 1000) {
-        const fps = Math.round((this.frameCount / delta) * 1000);
-        this.samples.push({
-          fps,
-          dropped: this.droppedFrames,
-          timestamp: now,
-        });
-
-        this.frameCount = 0;
-        this.droppedFrames = 0;
-        this.lastTimestamp = now;
-      }
-
-      this.tick();
-    });
-  }
-
-  getSummary() {
-    if (this.samples.length === 0) return null;
-
-    const fpsValues = this.samples.map(s => s.fps);
-    const sortedFps = [...fpsValues].sort((a, b) => a - b);
-
-    return {
-      avgFps: Math.round(fpsValues.reduce((a, b) => a + b, 0) / fpsValues.length),
-      p5Fps: sortedFps[Math.floor(sortedFps.length * 0.05)],    // Worst 5%
-      p50Fps: sortedFps[Math.floor(sortedFps.length * 0.5)],    // Median
-      p95Fps: sortedFps[Math.floor(sortedFps.length * 0.95)],   // Best 95%
-      minFps: sortedFps[0],
-      totalDroppedFrames: this.samples.reduce((a, s) => a + s.dropped, 0),
-      duration: this.samples.length, // seconds
-    };
-  }
+    
+    const now = performance.now();
+    this.frameCount++;
+    
+    const elapsed = now - this.lastTime;
+    
+    // Report every second
+    if (elapsed >= 1000) {
+      this.fps = Math.round((this.frameCount * 1000) / elapsed);
+      this.droppedFrames = Math.max(0, 60 - this.fps);
+      
+      this.callback(this.fps, this.droppedFrames);
+      
+      this.frameCount = 0;
+      this.lastTime = now;
+    }
+    
+    requestAnimationFrame(this.tick);
+  };
 }
 
-export const fpsMonitor = new FPSMonitor();
+// Usage in development
+if (__DEV__) {
+  const monitor = new FPSMonitor((fps, dropped) => {
+    if (fps < 45) {
+      console.warn(`Low FPS: ${fps} (${dropped} dropped frames)`);
+    }
+  });
+  monitor.start();
+}
 ```
 
-### Using the FPS Monitor for Specific Interactions
+### 2.3 Using React Native Performance Monitor
+
+In development, you can enable the built-in performance monitor:
 
 ```typescript
-// Measure FPS during scroll
-function ProductList() {
-  const handleScrollBegin = () => {
-    fpsMonitor.start();
-  };
-
-  const handleScrollEnd = () => {
-    const summary = fpsMonitor.stop();
-    if (summary) {
-      analytics.track('scroll_performance', {
-        screen: 'ProductList',
-        ...summary,
-      });
-
-      // Alert if scroll performance is bad
-      if (summary.p5Fps < 30) {
-        console.warn(
-          `Scroll jank detected: p5 FPS = ${summary.p5Fps}`,
-          summary
-        );
-      }
-    }
-  };
-
-  return (
-    <FlashList
-      data={products}
-      renderItem={renderProduct}
-      onScrollBeginDrag={handleScrollBegin}
-      onMomentumScrollEnd={handleScrollEnd}
-      estimatedItemSize={120}
-    />
-  );
+// Enable in dev builds
+if (__DEV__) {
+  // Shake the device → Dev Menu → Show Perf Monitor
+  // Or programmatically:
+  const { NativeModules } = require('react-native');
+  NativeModules.DevSettings?.setIsDebuggingRemotely?.(false);
+  // The perf monitor shows:
+  // - JS thread FPS
+  // - UI thread FPS
+  // - RAM usage
+  // - Views count
 }
 ```
 
-### FPS Thresholds
+### 2.4 FPS Thresholds and What They Mean
 
+| FPS Range | User Perception | Action Required |
+|-----------|----------------|-----------------|
+| **58-60** | Buttery smooth | None — you're golden |
+| **50-57** | Slight micro-jank, most users won't notice | Monitor, optimize if trending down |
+| **40-49** | Noticeable stuttering during animations/scroll | Investigate — check JS thread blocking |
+| **30-39** | Clearly janky, feels broken | P1 fix — users will leave reviews about this |
+| **< 30** | Unusable, slideshow | P0 — stop everything and fix this |
+
+### 2.5 Common Jank Causes in React Native
+
+```typescript
+// CAUSE 1: Heavy computation on the JS thread
+// BAD — sorting 10,000 items on every render
+function ProductList({ products }: { products: Product[] }) {
+  const sorted = products.sort((a, b) => a.price - b.price);  // Runs every render!
+  return <FlatList data={sorted} ... />;
+}
+
+// GOOD — memoize expensive computations
+function ProductList({ products }: { products: Product[] }) {
+  const sorted = useMemo(
+    () => [...products].sort((a, b) => a.price - b.price),
+    [products]
+  );
+  return <FlatList data={sorted} ... />;
+}
+
+// CAUSE 2: Re-rendering too many components
+// BAD — context change re-renders everything
+const AppContext = createContext({ user: null, theme: 'light', locale: 'en' });
+// Changing theme re-renders EVERY component that reads user or locale
+
+// GOOD — split contexts by update frequency
+const ThemeContext = createContext('light');
+const UserContext = createContext(null);
+const LocaleContext = createContext('en');
+
+// CAUSE 3: Images without fixed dimensions in lists
+// BAD — image dimensions calculated during scroll
+<FlatList
+  renderItem={({ item }) => (
+    <Image source={{ uri: item.image }} style={{ width: '100%' }} />
+    // Height is unknown → layout thrash during scroll
+  )}
+/>
+
+// GOOD — fixed dimensions
+<FlatList
+  renderItem={({ item }) => (
+    <Image 
+      source={{ uri: item.image }} 
+      style={{ width: SCREEN_WIDTH, height: SCREEN_WIDTH * 0.75 }}
+    />
+  )}
+  getItemLayout={(data, index) => ({
+    length: SCREEN_WIDTH * 0.75 + 16,  // item height + margin
+    offset: (SCREEN_WIDTH * 0.75 + 16) * index,
+    index,
+  })}
+/>
+
+// CAUSE 4: console.log in production
+// Every console.log serializes its arguments on the JS thread
+// In a FlatList with 1000 items, that's 1000 serializations per scroll
+// ALWAYS strip console.log in production builds:
+// babel.config.js:
+// plugins: ['transform-remove-console']
 ```
-┌──────────────────────────────────────────────────────────┐
-│  FPS QUALITY LEVELS                                       │
-│                                                           │
-│  60 FPS (16.6ms/frame)  — Smooth (target for most apps)  │
-│  45-59 FPS              — Acceptable (minor jank)         │
-│  30-44 FPS              — Noticeable jank (user will feel)│
-│  < 30 FPS               — Severe jank (unacceptable)     │
-│                                                           │
-│  For 120Hz displays:                                      │
-│  120 FPS (8.3ms/frame)  — Butter smooth                  │
-│  90-119 FPS             — Smooth                          │
-│  60-89 FPS              — Acceptable                      │
-│  < 60 FPS               — Noticeable                     │
-│                                                           │
-│  KEY: Measure p5 (worst 5%), not average                  │
-│  A p5 < 30 FPS means 1 in 20 seconds is severely janky   │
-└──────────────────────────────────────────────────────────┘
+
+### 2.6 Measuring Jank in Production
+
+For production jank measurement, report dropped frames to your analytics:
+
+```typescript
+// src/performance/jank-reporter.ts
+
+interface JankEvent {
+  timestamp: number;
+  droppedFrames: number;
+  duration: number;
+  screen: string;
+  interaction: string;  // 'scroll', 'animation', 'transition', 'idle'
+}
+
+class JankReporter {
+  private events: JankEvent[] = [];
+  private readonly threshold = 3; // Report if > 3 frames dropped in a window
+  
+  report(event: JankEvent) {
+    if (event.droppedFrames > this.threshold) {
+      this.events.push(event);
+      
+      // Batch send every 30 seconds
+      if (this.events.length >= 10) {
+        this.flush();
+      }
+    }
+  }
+  
+  flush() {
+    if (this.events.length === 0) return;
+    
+    const batch = [...this.events];
+    this.events = [];
+    
+    analytics.track('jank_events', {
+      events: batch,
+      device_tier: getDeviceTier(),
+      app_version: getAppVersion(),
+      free_memory_mb: getAvailableMemory(),
+    });
+  }
+}
 ```
 
 ---
 
-## 4. MEMORY USAGE TRACKING
+## 3. MEMORY USAGE
 
-Memory is the silent killer of mobile apps. Unlike crashes (which are loud and obvious), memory issues degrade the experience gradually — the app gets slower as the garbage collector works harder, the OS kills background tabs and cached data more aggressively, and eventually the OS kills your app entirely with no crash report.
+Memory management in mobile is not like web. Browsers can swap to disk. Mobile apps get killed. If your app uses too much memory, the OS will terminate it — no warning, no error, no crash report. The user just sees the app disappear.
 
-### Measuring Memory in React Native
+### 3.1 Understanding Mobile Memory
+
+```
+Typical memory budgets (approximate):
+
+iPhone SE (3GB RAM):      ~300-400MB for your app
+iPhone 15 (6GB RAM):      ~600-800MB for your app
+iPhone 15 Pro (8GB RAM):  ~800MB-1GB for your app
+
+Samsung Galaxy A14 (4GB): ~200-300MB for your app
+Samsung Galaxy S24 (8GB): ~600-800MB for your app
+
+The OS gives your app a fraction of total RAM.
+Background apps, the OS itself, and system services take the rest.
+```
+
+### 3.2 Memory Warning Thresholds
+
+| Platform | Warning Level | Action |
+|----------|--------------|--------|
+| **iOS** | `didReceiveMemoryWarning` | OS is running low. Free caches, drop non-essential data. |
+| **iOS** | Jetsam kill | Your app exceeded its memory limit. Terminated immediately. No crash report from Crashlytics. |
+| **Android** | `onTrimMemory(RUNNING_LOW)` | System is low on memory. Free what you can. |
+| **Android** | `onTrimMemory(RUNNING_CRITICAL)` | System is about to kill background apps. |
+| **Android** | OOM Kill | Terminated. May show as ANR in Play Console. |
+
+### 3.3 Tracking Memory in React Native
 
 ```typescript
-// lib/memory-monitor.ts
+// src/performance/memory-tracker.ts
+
 import { NativeModules, Platform } from 'react-native';
 
 interface MemoryInfo {
-  jsHeapSizeBytes: number;    // JavaScript heap (Hermes)
-  nativeHeapSizeBytes: number; // Native heap (Java/ObjC)
-  totalMemoryBytes: number;    // Total app memory
-  availableMemoryBytes: number; // Device available memory
+  usedJSHeap: number;     // MB
+  totalJSHeap: number;    // MB
+  nativeHeap: number;     // MB (Android only)
+  freeMemory: number;     // MB (system-wide)
 }
 
-export async function getMemoryInfo(): Promise<MemoryInfo> {
+async function getMemoryInfo(): Promise<MemoryInfo> {
   if (Platform.OS === 'android') {
-    // Android: use Debug.getMemoryInfo() via native module
-    return NativeModules.MemoryModule.getMemoryInfo();
-  }
-
-  // iOS: use task_info() via native module
-  return NativeModules.MemoryModule.getMemoryInfo();
-}
-
-// Hermes-specific heap info
-export function getHermesMemoryInfo() {
-  if (global.HermesInternal) {
-    const heapInfo = global.HermesInternal.getInstrumentedStats?.();
+    // Android: Use the Performance API or a native module
+    const info = await NativeModules.PerformanceModule.getMemoryInfo();
     return {
-      jsHeapSize: heapInfo?.js_heapSize ?? 0,
-      jsHeapAllocated: heapInfo?.js_totalAllocatedBytes ?? 0,
-      jsGcCount: heapInfo?.js_numGCs ?? 0,
+      usedJSHeap: info.jsHeapUsed / (1024 * 1024),
+      totalJSHeap: info.jsHeapTotal / (1024 * 1024),
+      nativeHeap: info.nativeHeap / (1024 * 1024),
+      freeMemory: info.freeMemory / (1024 * 1024),
     };
   }
-  return null;
+  
+  // iOS: Use performance.memory if available (Hermes)
+  if (global.performance?.memory) {
+    const mem = global.performance.memory;
+    return {
+      usedJSHeap: mem.usedJSHeapSize / (1024 * 1024),
+      totalJSHeap: mem.totalJSHeapSize / (1024 * 1024),
+      nativeHeap: 0,  // Not available via JS on iOS
+      freeMemory: 0,
+    };
+  }
+  
+  return { usedJSHeap: 0, totalJSHeap: 0, nativeHeap: 0, freeMemory: 0 };
 }
-```
 
-### Continuous Memory Monitoring
-
-```typescript
-// lib/memory-reporter.ts
-
-class MemoryReporter {
-  private intervalId: ReturnType<typeof setInterval> | null = null;
-  private samples: { timestamp: number; heapSize: number; total: number }[] = [];
-  private baselineHeap: number = 0;
-
-  start(intervalMs: number = 30000) {
-    // Record baseline
-    const initial = getHermesMemoryInfo();
-    this.baselineHeap = initial?.jsHeapSize ?? 0;
-
+// Periodic memory monitoring
+class MemoryMonitor {
+  private intervalId: NodeJS.Timeout | null = null;
+  private readonly samples: MemoryInfo[] = [];
+  
+  start(intervalMs = 10000) {  // Sample every 10 seconds
     this.intervalId = setInterval(async () => {
-      const hermesInfo = getHermesMemoryInfo();
-      const memInfo = await getMemoryInfo();
-
-      const sample = {
-        timestamp: Date.now(),
-        heapSize: hermesInfo?.jsHeapSize ?? 0,
-        total: memInfo.totalMemoryBytes,
-      };
-
-      this.samples.push(sample);
-
-      // Check for memory leak pattern
-      if (this.samples.length >= 10) {
-        this.checkForLeaks();
+      const info = await getMemoryInfo();
+      this.samples.push(info);
+      
+      // Alert on high memory usage
+      if (info.usedJSHeap > 200) {
+        console.warn(`High JS heap usage: ${info.usedJSHeap.toFixed(1)}MB`);
+        this.reportHighMemory(info);
       }
-
-      // Check for memory pressure
-      const usagePercent = memInfo.totalMemoryBytes /
-        (memInfo.totalMemoryBytes + memInfo.availableMemoryBytes) * 100;
-
-      if (usagePercent > 80) {
-        console.warn(`Memory pressure: ${usagePercent.toFixed(0)}% used`);
-        analytics.track('memory_pressure', {
-          usagePercent,
-          jsHeapMB: (hermesInfo?.jsHeapSize ?? 0) / 1024 / 1024,
-        });
+      
+      // Keep only last 60 samples (10 minutes)
+      if (this.samples.length > 60) {
+        this.samples.shift();
       }
+      
+      // Check for memory leaks (steadily increasing over time)
+      this.checkForLeaks();
     }, intervalMs);
   }
-
-  stop() {
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
-    }
-  }
-
+  
   private checkForLeaks() {
-    // Simple linear regression on heap size
-    // If it's consistently increasing, we might have a leak
-    const recentSamples = this.samples.slice(-10);
-    const firstHeap = recentSamples[0].heapSize;
-    const lastHeap = recentSamples[recentSamples.length - 1].heapSize;
-    const growthRate = (lastHeap - firstHeap) / recentSamples.length;
-
-    // If heap is growing by more than 1MB per sample interval, flag it
-    if (growthRate > 1024 * 1024) {
-      console.warn(
-        `Possible memory leak: heap growing at ${(growthRate / 1024 / 1024).toFixed(1)}MB per interval`
-      );
-      analytics.track('possible_memory_leak', {
-        growthRateMBPerInterval: growthRate / 1024 / 1024,
-        currentHeapMB: lastHeap / 1024 / 1024,
-        baselineHeapMB: this.baselineHeap / 1024 / 1024,
+    if (this.samples.length < 12) return;  // Need at least 2 minutes of data
+    
+    const recent = this.samples.slice(-12);
+    const trend = recent[recent.length - 1].usedJSHeap - recent[0].usedJSHeap;
+    
+    // If memory grew by more than 50MB in 2 minutes, something's leaking
+    if (trend > 50) {
+      analytics.track('memory_leak_suspected', {
+        growth_mb: trend,
+        current_mb: recent[recent.length - 1].usedJSHeap,
+        screen: getCurrentScreen(),
       });
     }
   }
+  
+  private reportHighMemory(info: MemoryInfo) {
+    analytics.track('high_memory_usage', {
+      js_heap_mb: info.usedJSHeap,
+      native_heap_mb: info.nativeHeap,
+      screen: getCurrentScreen(),
+      device: getDeviceModel(),
+    });
+  }
+  
+  stop() {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+    }
+  }
+}
+```
+
+### 3.4 Memory Thresholds
+
+| Metric | Good | Watch | Bad | Critical |
+|--------|------|-------|-----|----------|
+| **JS Heap** | < 100MB | 100-200MB | 200-400MB | > 400MB |
+| **Total app memory** | < 200MB | 200-400MB | 400-600MB | > 600MB |
+| **Memory growth rate** | Stable | < 10MB/min | 10-50MB/min | > 50MB/min |
+
+### 3.5 Common Memory Leaks in React Native
+
+```typescript
+// LEAK 1: Event listeners not cleaned up
+function ChatScreen() {
+  useEffect(() => {
+    const socket = io('wss://api.example.com');
+    socket.on('message', handleMessage);
+    
+    // BAD: No cleanup — socket stays open when screen unmounts
+    // GOOD:
+    return () => {
+      socket.off('message', handleMessage);
+      socket.disconnect();
+    };
+  }, []);
 }
 
-export const memoryReporter = new MemoryReporter();
-```
+// LEAK 2: Reanimated shared values holding references
+// Shared values persist on the UI thread even after the component unmounts.
+// This is usually fine, but if they hold large objects, it can leak.
 
-### Memory Thresholds
+// LEAK 3: Image cache growing unbounded
+// expo-image handles this well by default, but if you're using
+// react-native-fast-image or the built-in Image, monitor disk usage
 
-```
-┌──────────────────────────────────────────────────────────┐
-│  MEMORY THRESHOLDS BY DEVICE CLASS                        │
-│                                                           │
-│  LOW-END (2-3GB RAM):                                     │
-│    JS heap warning:  > 80MB                               │
-│    Total app warning: > 200MB                             │
-│    OOM risk:          > 300MB                             │
-│                                                           │
-│  MID-RANGE (4-6GB RAM):                                   │
-│    JS heap warning:  > 120MB                              │
-│    Total app warning: > 350MB                             │
-│    OOM risk:          > 500MB                             │
-│                                                           │
-│  HIGH-END (8GB+ RAM):                                     │
-│    JS heap warning:  > 200MB                              │
-│    Total app warning: > 500MB                             │
-│    OOM risk:          > 800MB                             │
-│                                                           │
-│  TREND ALERTS:                                             │
-│    Heap growth > 1MB/minute sustained → Likely leak       │
-│    GC frequency > 10/second → Memory pressure             │
-│    GC pause > 100ms → User-visible jank                   │
-└──────────────────────────────────────────────────────────┘
+// LEAK 4: FlatList with getItemLayout returning wrong values
+// This causes the list to keep more items in memory than necessary
+
+// LEAK 5: Global state that grows
+// Zustand stores, Redux stores, or MobX stores that accumulate data
+// without pruning old entries
+const useChatStore = create((set) => ({
+  messages: [],
+  addMessage: (msg) => set((state) => ({ 
+    messages: [...state.messages, msg]  // This array grows forever!
+  })),
+}));
+
+// FIX: Cap the array
+const useChatStore = create((set) => ({
+  messages: [],
+  addMessage: (msg) => set((state) => ({
+    messages: [...state.messages, msg].slice(-500),  // Keep only last 500
+  })),
+}));
 ```
 
 ---
 
-## 5. NETWORK LATENCY AND PAYLOAD SIZE
+## 4. NETWORK LATENCY METRICS
 
-Mobile networks are unpredictable. Your API might respond in 50ms from your office, but 500ms for a user on a train. Understanding your actual network performance profile is critical.
+Your app is only as fast as your API. Network latency directly impacts perceived performance, and mobile networks are unreliable in ways that wifi-connected development machines never show you.
 
-### Measuring API Latency
+### 4.1 What to Measure
 
 ```typescript
-// lib/network-metrics.ts
+// src/performance/network-tracker.ts
 
 interface NetworkMetric {
   url: string;
   method: string;
   statusCode: number;
-  requestSizeBytes: number;
-  responseSizeBytes: number;
-  dnsLookupMs: number;
-  tlsHandshakeMs: number;
-  ttfbMs: number;        // Time to first byte
-  downloadMs: number;
-  totalMs: number;
-  connectionType: string; // wifi, cellular, etc.
+  requestStart: number;    // When the request was initiated
+  dnsLookup: number;       // DNS resolution time (ms)
+  tcpConnect: number;      // TCP handshake time (ms)
+  tlsHandshake: number;    // TLS negotiation time (ms)
+  firstByte: number;       // Time to first byte (TTFB) (ms)
+  contentDownload: number; // Time to download response body (ms)
+  total: number;           // Total request time (ms)
+  responseSize: number;    // Response body size (bytes)
+  connectionType: string;  // 'wifi', '4g', '3g', 'offline'
 }
 
-// Wrap fetch to automatically collect metrics
-export function instrumentedFetch(input: RequestInfo, init?: RequestInit): Promise<Response> {
-  const startTime = performance.now();
-  const url = typeof input === 'string' ? input : input.url;
-  const method = init?.method ?? 'GET';
-
-  return fetch(input, init).then(async (response) => {
-    const endTime = performance.now();
-    const totalMs = endTime - startTime;
-
-    // Get response size
-    const clone = response.clone();
-    const body = await clone.arrayBuffer();
-    const responseSizeBytes = body.byteLength;
-
-    // Get request size
-    const requestSizeBytes = init?.body
-      ? new Blob([init.body]).size
-      : 0;
-
-    const metric: NetworkMetric = {
-      url: new URL(url).pathname, // Don't log query params (could contain PII)
-      method,
-      statusCode: response.status,
-      requestSizeBytes,
-      responseSizeBytes,
-      dnsLookupMs: 0,      // Not directly available from fetch
-      tlsHandshakeMs: 0,   // Would need native module
-      ttfbMs: totalMs * 0.6, // Approximate (use native module for real)
-      downloadMs: totalMs * 0.4,
-      totalMs,
-      connectionType: await getConnectionType(),
-    };
-
-    // Report metric
-    reportNetworkMetric(metric);
-
-    // Warn on slow requests
-    if (totalMs > 3000) {
-      console.warn(`Slow request: ${method} ${url} took ${totalMs.toFixed(0)}ms`);
+// Wrap your fetch/axios to capture metrics
+function createTrackedFetch(baseFetch: typeof fetch): typeof fetch {
+  return async (input, init) => {
+    const url = typeof input === 'string' ? input : input.url;
+    const method = init?.method || 'GET';
+    const start = performance.now();
+    
+    try {
+      const response = await baseFetch(input, init);
+      const end = performance.now();
+      
+      const metric: Partial<NetworkMetric> = {
+        url: sanitizeUrl(url),      // Strip PII from URLs
+        method,
+        statusCode: response.status,
+        total: Math.round(end - start),
+        connectionType: getConnectionType(),
+      };
+      
+      reportNetworkMetric(metric);
+      return response;
+    } catch (error) {
+      const end = performance.now();
+      
+      reportNetworkMetric({
+        url: sanitizeUrl(url),
+        method,
+        statusCode: 0,  // Network error
+        total: Math.round(end - start),
+        connectionType: getConnectionType(),
+      });
+      
+      throw error;
     }
+  };
+}
 
-    // Warn on large payloads
-    if (responseSizeBytes > 500 * 1024) { // > 500KB
-      console.warn(
-        `Large response: ${method} ${url} was ${(responseSizeBytes / 1024).toFixed(0)}KB`
-      );
-    }
-
-    return response;
-  });
+function sanitizeUrl(url: string): string {
+  // Remove IDs and tokens from URLs for aggregation
+  return url
+    .replace(/\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g, '/:uuid')
+    .replace(/\/\d+/g, '/:id')
+    .replace(/token=[^&]+/, 'token=REDACTED');
 }
 ```
 
-### Network Thresholds
+### 4.2 Network Latency Thresholds
 
-```
-┌──────────────────────────────────────────────────────────┐
-│  NETWORK PERFORMANCE TARGETS                              │
-│                                                           │
-│  API LATENCY (p50 / p95):                                 │
-│    WiFi:     < 200ms / < 500ms                            │
-│    LTE/5G:   < 300ms / < 800ms                            │
-│    3G:       < 500ms / < 2000ms                           │
-│                                                           │
-│  PAYLOAD SIZE:                                             │
-│    API response: < 100KB (ideal), < 500KB (acceptable)    │
-│    Image: < 200KB (list), < 500KB (detail)                │
-│    Initial data bundle: < 50KB                            │
-│                                                           │
-│  ERROR RATES:                                              │
-│    Network errors: < 1% (healthy), > 5% (investigate)     │
-│    Timeout rate: < 0.5%                                   │
-│    5xx errors: < 0.1%                                     │
-└──────────────────────────────────────────────────────────┘
-```
+| Metric | Good | Acceptable | Bad | Alert |
+|--------|------|-----------|-----|-------|
+| **API response (p50)** | < 200ms | 200-500ms | 500ms-1s | > 1s |
+| **API response (p95)** | < 500ms | 500ms-1s | 1-3s | > 3s |
+| **API response (p99)** | < 1s | 1-2s | 2-5s | > 5s |
+| **Error rate** | < 0.1% | 0.1-1% | 1-5% | > 5% |
+| **Timeout rate** | < 0.01% | 0.01-0.1% | 0.1-1% | > 1% |
 
----
+### 4.3 Connection-Aware Metrics
 
-## 6. APP SIZE OPTIMIZATION
-
-App size directly affects download rates, update rates, and storage-constrained devices. Google reports that for every 6MB increase in app size, install conversion drops by 1%.
-
-### Measuring App Size
-
-```bash
-# iOS: Xcode → Product → Archive → Distribute App → App Thinning Size Report
-# This shows the actual download size per device type
-
-# Android: Use bundletool
-bundletool build-apks \
-  --bundle=app.aab \
-  --output=output.apks \
-  --device-spec=device-spec.json
-
-# Or check Play Console → App size
-```
-
-### What Contributes to App Size
-
-```
-┌──────────────────────────────────────────────────────────┐
-│  REACT NATIVE APP SIZE BREAKDOWN (typical)                │
-│                                                           │
-│  JavaScript bundle         10-25 MB  (compressed: 2-5MB) │
-│  Native libraries          15-30 MB                      │
-│    ├── Hermes engine        ~3 MB                        │
-│    ├── React Native core    ~8 MB                        │
-│    ├── Third-party native   ~5-15 MB (varies)            │
-│    └── Your native code     ~1-3 MB                      │
-│  Assets (images, fonts)     5-20 MB                      │
-│  Resources                  1-5 MB                       │
-│                                                           │
-│  Total (before thinning):   30-80 MB                     │
-│  Download size (thinned):   15-40 MB                     │
-│                                                           │
-│  TARGETS:                                                 │
-│    Download size < 30MB  — Good                          │
-│    Download size < 50MB  — Acceptable                    │
-│    Download size > 100MB — Users may skip on cellular    │
-│    Download size > 200MB — Requires WiFi on iOS          │
-└──────────────────────────────────────────────────────────┘
-```
-
-### Size Optimization Checklist
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  APP SIZE OPTIMIZATION CHECKLIST                             │
-│                                                              │
-│  JS BUNDLE:                                                  │
-│  ☐ Enable Hermes (compiles to bytecode, smaller than JS)    │
-│  ☐ Enable Proguard/R8 (Android) for dead code elimination   │
-│  ☐ Use import() for lazy loading non-critical screens       │
-│  ☐ Audit dependencies: npx react-native-bundle-visualizer   │
-│  ☐ Remove unused dependencies (check with depcheck)         │
-│                                                              │
-│  ASSETS:                                                     │
-│  ☐ Compress images (use WebP/AVIF instead of PNG/JPEG)      │
-│  ☐ Use vector icons instead of image assets                 │
-│  ☐ Subset fonts (include only needed character ranges)      │
-│  ☐ Consider downloading large assets on-demand              │
-│                                                              │
-│  NATIVE:                                                     │
-│  ☐ Enable App Thinning (iOS) — sends only relevant slices   │
-│  ☐ Use Android App Bundle (AAB) not APK                     │
-│  ☐ Audit native dependencies for size impact                │
-│  ☐ Enable bitcode (iOS) for compiler optimization           │
-│  ☐ Strip debug symbols from release builds                  │
-│                                                              │
-│  MONITORING:                                                  │
-│  ☐ Track app size in CI (fail on >5% increase)              │
-│  ☐ Compare against size budget                              │
-│  ☐ Review size impact of every new dependency               │
-└─────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 7. GOOGLE PLAY CONSOLE VITALS
-
-Play Console's Android Vitals is the most important dashboard for Android app health. Google uses these metrics to determine your app's quality tier, which affects store ranking, featuring, and user trust signals.
-
-### The Core Vitals
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  ANDROID VITALS — CORE METRICS                               │
-│                                                              │
-│  CRASH RATE (user-perceived)                                 │
-│  Bad threshold:  > 1.09%  (daily sessions with crashes)     │
-│  Target:         < 0.5%                                      │
-│  Google's bar:   Bottom 25% of peer apps → bad rating       │
-│  Note: JavaScript crashes that show error screens count!     │
-│                                                              │
-│  ANR RATE (Application Not Responding)                        │
-│  Bad threshold:  > 0.47%  (daily sessions with ANRs)        │
-│  Target:         < 0.1%                                      │
-│  Trigger:        Main thread blocked > 5 seconds            │
-│  Common cause:   Synchronous I/O, heavy computation on main │
-│  RN-specific:    Long Bridge serialization, sync native calls│
-│                                                              │
-│  STARTUP TIME                                                │
-│  Bad threshold:  Cold start > 5 seconds                      │
-│  Target:         < 2 seconds cold start                      │
-│  Measured:       From process creation to first frame drawn  │
-│                                                              │
-│  PERMISSION DENIALS                                          │
-│  Bad threshold:  Varies by permission type                   │
-│  Note: Excessive denials suggest poor permission UX          │
-│                                                              │
-│  BATTERY (Background)                                        │
-│  Excessive wakeups, stuck wake locks, excessive WiFi scans   │
-│  These get your app flagged as battery-draining              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Reading Play Console Vitals
-
-```
-Navigation: Play Console → Your app → Android vitals → Overview
-
-KEY SECTIONS:
-1. Core vitals summary — green/yellow/red status for each metric
-2. Crash rate — daily trend, breakdown by device, OS, version
-3. ANR rate — same breakdowns
-4. Startup time — distribution histogram
-5. Technical quality — grouped by issue type
-
-WHAT TO DO:
-1. Check vitals after every release (24-48 hour window)
-2. Set up email alerts for threshold violations
-3. Segment by:
-   - App version (detect regressions)
-   - Device model (find device-specific issues)
-   - Android version (find OS-specific issues)
-4. Prioritize fixes by user impact (sessions affected)
-```
-
-### Common ANR Causes in React Native
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  ANR DIAGNOSIS IN REACT NATIVE                               │
-│                                                              │
-│  CAUSE: Synchronous native module calls on main thread       │
-│  Fix: Make the native method async, or use TurboModules      │
-│  Check: Look for "main" in ANR stack traces                  │
-│                                                              │
-│  CAUSE: Large Bridge serialization (old architecture)        │
-│  Fix: Migrate to New Architecture (JSI)                      │
-│  Check: Look for ReadableNativeMap in stack traces           │
-│                                                              │
-│  CAUSE: Synchronous disk I/O on main thread                  │
-│  Fix: Use async I/O, move to background thread               │
-│  Check: Look for "write" or "read" syscalls in traces        │
-│                                                              │
-│  CAUSE: SQLite operations on main thread                     │
-│  Fix: Use MMKV or move SQLite to background thread           │
-│  Check: Look for "sqlite3_" in stack traces                  │
-│                                                              │
-│  CAUSE: Layout thrashing (many synchronous measure calls)    │
-│  Fix: Reduce nested views, batch layout operations           │
-│  Check: Look for "onMeasure" in stack traces                 │
-└─────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 8. APP STORE CONNECT METRICS
-
-Apple provides a different set of metrics through App Store Connect and Xcode Organizer.
-
-### Key Metrics in App Store Connect
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  APP STORE CONNECT → App Analytics                           │
-│                                                              │
-│  PERFORMANCE:                                                │
-│  Crash Rate        — Crashes per session (similar to Play)  │
-│  Disk Writes       — Excessive I/O can trigger warnings     │
-│  Launch Time       — p50 and p95 cold start times           │
-│  Hang Rate         — Main thread blocked > 250ms            │
-│  Memory (peak)     — Maximum memory usage per session       │
-│                                                              │
-│  ENGAGEMENT:                                                 │
-│  Sessions per Active Device                                  │
-│  Average Session Duration                                    │
-│  Retention (Day 1, Day 7, Day 28)                           │
-│  Active Devices (daily, monthly)                             │
-│                                                              │
-│  APPLE'S QUALITY BAR:                                        │
-│  - Apps with high hang rates get warning emails              │
-│  - Apps with high crash rates can be removed from the store  │
-│  - Battery usage complaints trigger review flags             │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Xcode Organizer Metrics
-
-```
-Xcode → Window → Organizer → Metrics tab
-
-AVAILABLE METRICS:
-1. Battery Usage (CPU time, networking, location, display)
-2. Launch Time (histograms, trends, percentiles)
-3. Hang Rate (by duration: 250ms-500ms, 500ms-1s, 1s-2s, 2s+)
-4. Memory (peak, suspended memory, memory graph)
-5. Disk Writes (logical, excessive write diagnostics)
-6. Scrolling (hitch rate during scroll events)
-
-These metrics are collected from real users via MetricKit,
-aggregated by Apple, and presented with 24-hour delay.
-```
-
-### MetricKit for Custom Metrics
-
-```swift
-// AppDelegate.swift (or a native module)
-import MetricKit
-
-class MetricManager: NSObject, MXMetricManagerSubscriber {
-    static let shared = MetricManager()
-
-    func start() {
-        MXMetricManager.shared.add(self)
-    }
-
-    func didReceive(_ payloads: [MXMetricPayload]) {
-        for payload in payloads {
-            // Launch metrics
-            if let launchMetrics = payload.applicationLaunchMetrics {
-                let coldStart = launchMetrics.histogrammedTimeToFirstDraw
-                // Send to your analytics
-            }
-
-            // Hang metrics
-            if let hangMetrics = payload.applicationResponsivenessMetrics {
-                let hangTime = hangMetrics.histogrammedApplicationHangTime
-                // Alert on regression
-            }
-
-            // Memory metrics
-            if let memoryMetrics = payload.memoryMetrics {
-                let peakMemory = memoryMetrics.peakMemoryUsage
-                // Track trends
-            }
-        }
-    }
-
-    // Diagnostic reports (crash/hang details)
-    func didReceive(_ payloads: [MXDiagnosticPayload]) {
-        for payload in payloads {
-            if let crashDiagnostics = payload.crashDiagnostics {
-                for diagnostic in crashDiagnostics {
-                    let callStack = diagnostic.callStackTree
-                    // Symbolicate and analyze
-                }
-            }
-        }
-    }
-}
-```
-
----
-
-## 9. DATADOG RUM FOR MOBILE
-
-Real User Monitoring (RUM) gives you production telemetry from actual user sessions. While Play Console and App Store Connect provide aggregate metrics, RUM gives you individual session traces — you can see exactly what one user did, how long each screen took, what errors they encountered, and what the app's performance was at each step.
-
-### Setting Up Datadog RUM
+Mobile networks are wildly variable. An API that responds in 50ms on wifi takes 800ms on 3G. Always segment your metrics by connection type:
 
 ```typescript
-// lib/datadog.ts
+import NetInfo from '@react-native-community/netinfo';
+
+async function getConnectionType(): Promise<string> {
+  const state = await NetInfo.fetch();
+  
+  if (!state.isConnected) return 'offline';
+  
+  if (state.type === 'wifi') return 'wifi';
+  
+  if (state.type === 'cellular') {
+    switch (state.details?.cellularGeneration) {
+      case '2g': return '2g';
+      case '3g': return '3g';
+      case '4g': return '4g';
+      case '5g': return '5g';
+      default: return 'cellular-unknown';
+    }
+  }
+  
+  return state.type;
+}
+
+// Expected latency by connection type (for your dashboards)
+// wifi:  50-200ms
+// 5g:    50-100ms
+// 4g:    100-400ms
+// 3g:    300-1500ms
+// 2g:    1000-5000ms
+```
+
+---
+
+## 5. APP SIZE AND ITS IMPACT ON DOWNLOADS
+
+App size is the most underestimated metric in mobile development. It directly impacts:
+
+1. **Download conversion** — Google Play shows warnings for large apps on mobile data
+2. **Install time** — Larger apps take longer to install, increasing drop-off
+3. **Update adoption** — Users on limited data plans defer large updates
+4. **Storage pressure** — Users uninstall large apps first when they run out of space
+5. **Store placement** — Both stores factor app size into their ranking algorithms
+
+### 5.1 Size Thresholds
+
+| Platform | Size | Impact |
+|----------|------|--------|
+| **Android** | < 50MB | Optimal. No warnings. Fast installs. |
+| **Android** | 50-150MB | Acceptable. Consider using Play App Bundles. |
+| **Android** | > 150MB | Play Store shows "large app" warning on mobile data. This kills your conversion rate. |
+| **Android** | > 200MB | Must use Play Asset Delivery or expansion files. |
+| **iOS** | < 50MB | Can download over cellular without user permission. |
+| **iOS** | 50-200MB | iOS prompts user to confirm download on cellular. Many users tap "cancel." |
+| **iOS** | > 200MB | Requires WiFi download (this threshold was raised from 150MB in 2019, then 200MB in 2022). Can be changed in iOS Settings. |
+| **iOS** | > 4GB | Hard limit from App Store. |
+
+### 5.2 Measuring App Size
+
+Your build system should track app size on every commit. Here's how:
+
+```bash
+# Android: Measure the AAB (App Bundle) size
+# This is what gets uploaded to Play Store
+ls -la android/app/build/outputs/bundle/release/app-release.aab
+
+# Android: See the estimated download size
+# bundletool gives you per-device estimates
+bundletool build-apks --bundle=app-release.aab --output=app.apks
+bundletool get-size total --apks=app.apks
+# Output: "Min: 25MB, Max: 45MB" (varies by device)
+
+# iOS: After archiving, check the .ipa size
+ls -la build/MyApp.ipa
+
+# iOS: More accurate — use App Store Connect's size report
+# After uploading, App Store Connect shows the actual download size
+# per device (iPhone, iPad, etc.)
+```
+
+```typescript
+// CI/CD: Track size over time
+// In your CI pipeline (GitHub Actions example):
+
+// .github/workflows/track-size.yml
+// - name: Measure Android size
+//   run: |
+//     SIZE=$(stat -f%z android/app/build/outputs/bundle/release/app-release.aab)
+//     SIZE_MB=$(echo "scale=2; $SIZE / 1048576" | bc)
+//     echo "Android bundle size: ${SIZE_MB}MB"
+//     curl -X POST $METRICS_ENDPOINT -d "{\"metric\":\"app_size_android\",\"value\":$SIZE_MB}"
+
+// - name: Fail if size exceeds limit
+//   run: |
+//     SIZE=$(stat -f%z android/app/build/outputs/bundle/release/app-release.aab)
+//     SIZE_MB=$(echo "scale=2; $SIZE / 1048576" | bc)
+//     if (( $(echo "$SIZE_MB > 100" | bc -l) )); then
+//       echo "::error::Android bundle size ($SIZE_MB MB) exceeds 100MB limit"
+//       exit 1
+//     fi
+```
+
+### 5.3 What Makes React Native Apps Large
+
+| Component | Typical Size | Notes |
+|-----------|-------------|-------|
+| **Hermes bytecode** | 5-15MB | Your JS bundle, compiled |
+| **Native libraries** | 10-30MB | Per-architecture. Use app bundles! |
+| **Assets (images)** | 5-50MB+ | The biggest variable |
+| **Fonts** | 1-5MB | Each font file is ~200KB-1MB |
+| **Native modules** | 5-20MB | Each native dependency adds weight |
+| **React Native core** | ~5MB | The framework itself |
+
+### 5.4 Size Reduction Strategies
+
+```typescript
+// 1. Use Hermes (you should already be doing this)
+// Hermes compiles JS to bytecode, which is smaller than raw JS
+// In app.json:
+// "jsEngine": "hermes"
+
+// 2. Enable ProGuard/R8 on Android
+// android/app/build.gradle:
+// def enableProguardInReleaseBuilds = true
+
+// 3. Use App Bundles (AAB) instead of APKs
+// Play Store splits the bundle per device — users only download
+// the native libraries for their architecture
+
+// 4. Optimize images
+// - Use WebP instead of PNG (40-60% smaller)
+// - Remove @3x images if you don't need them
+// - Consider loading large images from CDN instead of bundling
+
+// 5. Audit your dependencies
+// npx react-native-bundle-visualizer
+// This shows you what's in your JS bundle
+
+// 6. Tree shake unused code
+// Hermes doesn't tree shake by default.
+// Use Metro's tree shaking or re-export only what you need:
+
+// BAD
+import { format } from 'date-fns';  // Imports ALL of date-fns
+
+// GOOD
+import { format } from 'date-fns/format';  // Imports only format
+```
+
+---
+
+## 6. GOOGLE PLAY CONSOLE VITALS
+
+Google Play Console Vitals is the most important dashboard you're not looking at. Google uses these metrics to rank your app in search results and decide whether to show it in recommendations. Bad vitals = less visibility = fewer installs. It's that direct.
+
+### 6.1 The Metrics Google Watches
+
+#### ANR Rate (Application Not Responding)
+
+An ANR occurs when your app's main thread is blocked for more than 5 seconds. On Android, the user sees the "App isn't responding" dialog.
+
+| Metric | Good | Bad Behavior Threshold |
+|--------|------|----------------------|
+| **User-perceived ANR rate** | < 0.47% | >= 0.47% |
+| **ANR rate (all occurrences)** | < 2% | >= 8% |
+
+**What Google does:** If your user-perceived ANR rate exceeds **0.47%**, Google marks your app with a "bad behavior" badge. This reduces your visibility in Play Store search and recommendations.
+
+**Common ANR causes in React Native:**
+```typescript
+// ANR CAUSE 1: Large synchronous operations on the main thread
+// JSON.parse of a 5MB response
+const data = JSON.parse(hugeJsonString);  // Blocks main thread
+
+// FIX: Use a worker or break it up
+// Or better: paginate your API responses
+
+// ANR CAUSE 2: SQLite operations on the main thread
+// Watermelon DB / realm queries that return thousands of records
+
+// ANR CAUSE 3: Network calls in onCreate
+// If the Android activity initialization makes a blocking network call
+
+// ANR CAUSE 4: Deadlocks in native modules
+// A native module that waits for the JS thread while the JS thread
+// waits for the native module
+```
+
+#### Crash Rate
+
+| Metric | Good | Bad Behavior Threshold |
+|--------|------|----------------------|
+| **User-perceived crash rate** | < 1.09% | >= 1.09% |
+| **Crash rate (all occurrences)** | < 2% | >= 8% |
+
+**What Google does:** If your user-perceived crash rate exceeds **1.09%**, bad behavior badge. Same visibility penalty.
+
+#### Startup Time
+
+| Metric | Good | Slow |
+|--------|------|------|
+| **Cold start** | < 3s | > 5s |
+| **Warm start** | < 1.5s | > 3s |
+| **Hot start** | < 1s | > 1.5s |
+
+Google tracks startup time percentiles (p50, p90, p99) in Play Console under "Android vitals → App startup time."
+
+**What Google does:** Slow startup doesn't get a "bad behavior" badge, but it does affect your Core metrics in the Play Console. And Google has stated that performance metrics factor into Play Store ranking.
+
+#### Permission Denials
+
+| Metric | What It Measures |
+|--------|-----------------|
+| **Permission denial rate** | How often users deny runtime permissions |
+
+**Why it matters:** A high denial rate (> 30%) for a permission suggests you're requesting it at the wrong time or without adequate explanation. Google doesn't penalize you directly for this, but it affects user trust metrics.
+
+```typescript
+// BAD: Requesting camera permission on app launch
+// Users don't know why you need it, so they deny
+useEffect(() => {
+  Permissions.request('camera');  // 60% denial rate
+}, []);
+
+// GOOD: Request in context, with explanation
+function ScanQRButton() {
+  const handlePress = async () => {
+    // Show explanation first
+    Alert.alert(
+      'Camera Access',
+      'We need camera access to scan the QR code on your membership card.',
+      [
+        { text: 'Not Now', style: 'cancel' },
+        { 
+          text: 'Allow Camera', 
+          onPress: () => Permissions.request('camera'),  // 85% acceptance rate
+        },
+      ]
+    );
+  };
+  
+  return <Button onPress={handlePress}>Scan QR Code</Button>;
+}
+```
+
+#### Excessive Wakeups
+
+| Metric | Good | Bad Behavior Threshold |
+|--------|------|----------------------|
+| **Stuck partial wakelocks** | < 0.3% of sessions | >= 0.3% |
+| **Excessive wakeups** | < 0.1% of sessions | >= 0.1% |
+
+This happens when your app's background processes (push notification handlers, background tasks) wake the device too frequently. It drains battery and Google penalizes it.
+
+### 6.2 Play Console Dashboard Setup
+
+Navigate to **Play Console → Your App → Android vitals → Overview**. You should see:
+
+1. **Core vitals** — ANR rate, crash rate (the ones with bad behavior thresholds)
+2. **Other vitals** — Startup time, permission denials, battery usage
+3. **Trends** — 28-day rolling averages
+
+**Set up email alerts:**
+Play Console → Settings → Notifications → Enable "Performance alerts." You'll get emailed when your app crosses a bad behavior threshold.
+
+### 6.3 Comparing Against Peers
+
+Play Console shows you how your vitals compare to peer apps in the same category. This is gold. If your crash rate is 0.8% and the peer median is 0.5%, you know you're behind. If your startup time p90 is 4s and the peer median is 3s, that's actionable.
+
+Look at: Play Console → Android vitals → Benchmarks.
+
+---
+
+## 7. APP STORE CONNECT METRICS
+
+Apple's equivalent of Play Console Vitals is spread across App Store Connect and Xcode Organizer. It's less centralized than Google's but equally important.
+
+### 7.1 Crashes (App Store Connect)
+
+Navigate to **App Store Connect → Your App → Analytics → Metrics → Crashes**.
+
+Apple reports:
+- **Crash count** — absolute number per day
+- **Crash rate** — crashes per 1,000 sessions
+- **Unique affected devices** — how many devices experienced at least one crash
+
+| Metric | Good | Watch | Bad |
+|--------|------|-------|-----|
+| **Crashes per 1K sessions** | < 5 | 5-15 | > 15 |
+| **Crash-free device rate** | > 99.5% | 99-99.5% | < 99% |
+
+**Apple's enforcement:** Unlike Google's automated "bad behavior" badge, Apple reviews are more manual. But apps with high crash rates get flagged during App Review, and extreme cases can lead to removal.
+
+### 7.2 Disk Writes (Xcode Organizer)
+
+This is one Apple tracks that most developers don't know about. Your app should minimize disk writes because:
+- SSDs have limited write cycles
+- Excessive writes drain battery
+- Apple measures this and shows it in Xcode Organizer
+
+**Xcode → Window → Organizer → Disk Writes**
+
+| Metric | Good | Watch | Bad |
+|--------|------|-------|-----|
+| **Disk writes (daily)** | < 100MB/day | 100-500MB/day | > 500MB/day |
+| **Logical writes per session** | < 50MB | 50-200MB | > 200MB |
+
+Common culprits in React Native:
+- Excessive AsyncStorage writes (use MMKV instead)
+- Uncompressed log files
+- Image caching without size limits
+- SQLite WAL files growing without checkpointing
+
+### 7.3 Memory (Xcode Organizer)
+
+**Xcode → Window → Organizer → Memory**
+
+Apple shows your app's memory footprint and compares it to the device's capabilities. They also track **memory pressure terminations** (jetsam kills) — when the OS kills your app because it's using too much memory.
+
+| Metric | Good | Watch | Bad |
+|--------|------|-------|-----|
+| **Peak memory** | < 200MB | 200-400MB | > 400MB |
+| **Memory at suspend** | < 100MB | 100-200MB | > 200MB |
+| **Jetsam terminations** | 0 | < 0.1% of sessions | > 0.1% |
+
+### 7.4 Launch Time (Xcode Organizer)
+
+**Xcode → Window → Organizer → Launch Time**
+
+Apple tracks cold launch time and breaks it down by device type. They show you:
+- **Typical** (p50) — What most users experience
+- **Slow** (p90) — What 10% of users experience
+
+| Metric | Good | Watch | Bad |
+|--------|------|-------|-----|
+| **Cold launch (p50)** | < 1s | 1-2s | > 2s |
+| **Cold launch (p90)** | < 2s | 2-3s | > 3s |
+
+### 7.5 Hang Rate (iOS 16+)
+
+A "hang" is when the main thread is blocked for more than 250ms. This is more granular than Android's 5-second ANR threshold.
+
+**Xcode → Window → Organizer → Hangs**
+
+| Metric | Good | Watch | Bad |
+|--------|------|-------|-----|
+| **Hang rate** | < 1 per hour | 1-5 per hour | > 5 per hour |
+| **Critical hangs (> 2s)** | 0 per session | 0-1 per session | > 1 per session |
+
+### 7.6 Battery Usage (Xcode Organizer)
+
+**Xcode → Window → Organizer → Battery Usage**
+
+Apple tracks:
+- **CPU time** — how much CPU your app uses in foreground and background
+- **Location usage** — are you using GPS when you don't need to?
+- **Networking** — how much data are you transferring?
+- **Display** — are you preventing the screen from sleeping?
+
+There are no hard thresholds, but Apple compares your app to peer apps. If you're significantly worse, they'll flag it.
+
+---
+
+## 8. DATADOG RUM FOR MOBILE
+
+While Play Console and App Store Connect give you platform-specific metrics, Datadog Real User Monitoring (RUM) gives you a unified, cross-platform view of your app's performance. It's the tool that ties everything together.
+
+### 8.1 Setting Up Datadog RUM for React Native
+
+```bash
+npm install @datadog/mobile-react-native
+```
+
+```typescript
+// src/monitoring/datadog.ts
+
 import {
   DdSdkReactNative,
   DdSdkReactNativeConfiguration,
@@ -981,153 +1137,207 @@ import {
 } from '@datadog/mobile-react-native';
 
 const config = new DdSdkReactNativeConfiguration(
-  process.env.DATADOG_CLIENT_TOKEN!,
-  process.env.DATADOG_ENVIRONMENT!, // 'production', 'staging'
-  process.env.DATADOG_APPLICATION_ID!,
-  true, // Track interactions
-  true, // Track XHR
-  true  // Track errors
+  'YOUR_CLIENT_TOKEN',                           // Client token (not API key!)
+  'production',                                    // Environment
+  'app-id-from-datadog',                          // RUM Application ID
+  true,                                            // Track interactions
+  true,                                            // Track XHR resources
+  true,                                            // Track errors
 );
 
-config.site = 'US1'; // or 'EU1', 'US3', etc.
+config.site = 'US1';                              // Or 'EU1', 'US3', etc.
 config.nativeCrashReportEnabled = true;
-config.sampleRate = 100; // 100% of sessions in production
-config.serviceName = 'my-mobile-app';
-config.verbosity = __DEV__ ? SdkVerbosity.DEBUG : SdkVerbosity.WARN;
+config.sampleRate = 100;                          // 100% of sessions in production
+config.resourceTracingSamplingRate = 20;          // Sample 20% for APM traces
+config.verbosity = SdkVerbosity.WARN;
+config.trackingConsent = TrackingConsent.GRANTED;  // Respect user consent!
 
-export async function initializeDatadog() {
+export async function initDatadog() {
   await DdSdkReactNative.initialize(config);
-
-  // Set user info when authenticated
-  const user = await getAuthenticatedUser();
-  if (user) {
-    DdSdkReactNative.setUser({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-    });
-  }
-
-  // Set global attributes
+  
+  // Set user info for session tracking
+  DdSdkReactNative.setUser({
+    id: getUserId(),
+    name: getUserName(),
+    email: getUserEmail(),
+    // Custom attributes
+    subscription_tier: getSubscriptionTier(),
+    app_version: getAppVersion(),
+  });
+  
+  // Set global attributes that appear on every event
   DdSdkReactNative.setAttributes({
-    app_version: DeviceInfo.getVersion(),
-    build_number: DeviceInfo.getBuildNumber(),
-    device_model: DeviceInfo.getModel(),
-    os_version: DeviceInfo.getSystemVersion(),
-    is_low_end_device: isLowEndDevice(),
+    app_version: getAppVersion(),
+    build_number: getBuildNumber(),
+    js_engine: global.HermesInternal ? 'hermes' : 'jsc',
+    device_tier: getDeviceTier(),
   });
 }
 ```
 
-### Tracking Views (Screens)
+### 8.2 Custom Views (Screen Tracking)
 
-```typescript
-// lib/datadog-navigation.ts
-import { DdRumReactNavigationTracking } from '@datadog/mobile-react-native-navigation';
-
-// In your navigation setup
-export function NavigationContainer({ children }: { children: React.ReactNode }) {
-  const navigationRef = useNavigationContainerRef();
-
-  return (
-    <RNNavigationContainer
-      ref={navigationRef}
-      onReady={() => {
-        DdRumReactNavigationTracking.startTrackingViews(navigationRef);
-      }}
-    >
-      {children}
-    </RNNavigationContainer>
-  );
-}
-```
-
-### Custom Performance Metrics
-
-```typescript
+```tsx
 import { DdRum } from '@datadog/mobile-react-native';
 
-// Track a custom timing
-function useTrackScreenLoad(screenName: string) {
-  const startTime = useRef(performance.now());
-
+// Track screen views
+function useScreenTracking(screenName: string) {
   useEffect(() => {
+    DdRum.startView(
+      screenName,                    // View key (unique identifier)
+      screenName,                    // View name (human readable)
+      {
+        screen_type: 'feature',      // Custom attributes
+      }
+    );
+    
     return () => {
-      const duration = performance.now() - startTime.current;
-      DdRum.addTiming(`${screenName}_load_time`);
+      DdRum.stopView(screenName);
     };
   }, [screenName]);
-
-  // Call when content is visible
-  const markContentReady = useCallback(() => {
-    const duration = performance.now() - startTime.current;
-    DdRum.addTiming(`${screenName}_content_ready`);
-
-    // Also track as a custom metric
-    DdRum.addAction('CUSTOM', `${screenName}_content_ready`, {
-      duration_ms: duration,
-    });
-  }, [screenName]);
-
-  return { markContentReady };
 }
 
 // Usage
-function ProductDetailScreen({ productId }: { productId: string }) {
-  const { markContentReady } = useTrackScreenLoad('ProductDetail');
-
-  const { data: product } = useQuery({
-    queryKey: ['product', productId],
-    queryFn: () => fetchProduct(productId),
-    onSuccess: () => markContentReady(),
-  });
-
+function ProductDetailScreen({ product }: ProductDetailProps) {
+  useScreenTracking(`ProductDetail-${product.id}`);
   // ...
 }
 ```
 
-### Custom Error Tracking
+### 8.3 Custom Actions and Timing
 
 ```typescript
-// Track business logic errors (not just crashes)
-function handlePaymentError(error: PaymentError) {
+import { DdRum, RumActionType } from '@datadog/mobile-react-native';
+
+// Track user actions
+function handleAddToCart(product: Product) {
+  DdRum.addAction(
+    RumActionType.TAP,
+    'Add to Cart',
+    {
+      product_id: product.id,
+      product_price: product.price,
+      product_category: product.category,
+    }
+  );
+  
+  // ... actual logic
+}
+
+// Track custom timing
+async function loadProductCatalog() {
+  const startTime = Date.now();
+  
+  try {
+    const products = await api.getProducts();
+    const duration = Date.now() - startTime;
+    
+    DdRum.addTiming('product_catalog_load');
+    
+    // Or use a custom action with timing
+    DdRum.addAction(
+      RumActionType.CUSTOM,
+      'catalog_loaded',
+      {
+        duration_ms: duration,
+        product_count: products.length,
+        connection_type: getConnectionType(),
+      }
+    );
+    
+    return products;
+  } catch (error) {
+    DdRum.addError(
+      error.message,
+      'source',
+      error.stack || '',
+      {
+        duration_ms: Date.now() - startTime,
+        connection_type: getConnectionType(),
+      }
+    );
+    throw error;
+  }
+}
+```
+
+### 8.4 Resource Tracking (API Calls)
+
+Datadog automatically tracks fetch/XHR calls as "resources." But you can add custom attributes:
+
+```typescript
+import { DdRum } from '@datadog/mobile-react-native';
+
+// The SDK auto-instruments fetch, but you can add more context:
+DdRum.addTiming('first_api_call');
+
+// For custom resource tracking (e.g., WebSocket messages):
+DdRum.startResource(
+  'ws-message-123',           // Resource key
+  'GET',                       // Method
+  'wss://api.example.com/ws', // URL
+  {
+    message_type: 'chat',
+  }
+);
+
+// ... when complete
+DdRum.stopResource(
+  'ws-message-123',
+  200,                         // Status code
+  'xhr',                       // Resource type
+  1024,                        // Response size in bytes
+  {
+    message_count: 5,
+  }
+);
+```
+
+### 8.5 Error Tracking
+
+```typescript
+import { DdRum, ErrorSource } from '@datadog/mobile-react-native';
+
+// Manual error tracking
+try {
+  await riskyOperation();
+} catch (error) {
   DdRum.addError(
     error.message,
-    'SOURCE', // or 'NETWORK', 'CONSOLE'
-    error.stack ?? '',
+    ErrorSource.SOURCE,        // 'source', 'network', 'console', 'custom'
+    error.stack || '',
     {
-      payment_provider: error.provider,
-      error_code: error.code,
-      amount: error.amount,
-      currency: error.currency,
+      operation: 'risky_operation',
+      user_action: 'submit_form',
+      screen: getCurrentScreen(),
     }
   );
 }
 
-// Track API errors with context
-function instrumentApiClient(baseClient: ApiClient) {
-  return new Proxy(baseClient, {
-    get(target, prop) {
-      const original = target[prop as keyof ApiClient];
-      if (typeof original !== 'function') return original;
+// Global error handler
+ErrorUtils.setGlobalHandler((error, isFatal) => {
+  DdRum.addError(
+    error.message,
+    ErrorSource.SOURCE,
+    error.stack || '',
+    {
+      is_fatal: isFatal,
+      screen: getCurrentScreen(),
+    }
+  );
+});
 
-      return async (...args: any[]) => {
-        try {
-          return await original.apply(target, args);
-        } catch (error) {
-          DdRum.addError(
-            `API Error: ${String(prop)}`,
-            'NETWORK',
-            error instanceof Error ? error.stack ?? '' : '',
-            {
-              endpoint: String(prop),
-              status_code: error.statusCode,
-              args: JSON.stringify(args).slice(0, 200),
-            }
-          );
-          throw error;
-        }
-      };
+// Promise rejection handler
+if (global.HermesInternal) {
+  global.HermesInternal.enablePromiseRejectionTracker?.({
+    allRejections: true,
+    onUnhandled: (id: number, rejection: any) => {
+      DdRum.addError(
+        `Unhandled Promise Rejection: ${rejection}`,
+        ErrorSource.SOURCE,
+        rejection?.stack || '',
+        { promise_id: id }
+      );
     },
   });
 }
@@ -1135,265 +1345,517 @@ function instrumentApiClient(baseClient: ApiClient) {
 
 ---
 
-## 10. SETTING UP DASHBOARDS
+## 9. BUILDING DASHBOARDS THAT PEOPLE ACTUALLY LOOK AT
 
-Metrics are useless if nobody looks at them. Dashboards make metrics visible, and visibility drives action.
+Here's a hard truth: most dashboards are never looked at after the first week. The team builds them with enthusiasm, walks away, and never comes back until something breaks. That defeats the purpose.
 
-### The Three Essential Dashboards
+The trick to dashboards that get used is **putting the right information in the right place at the right time.**
 
+### 9.1 The Three Dashboard Tiers
+
+**Tier 1: The TV Dashboard (Office TV / Team Slack Channel)**
+
+This is what goes on the big screen in the office or gets posted to Slack every morning. It should be glanceable in 5 seconds.
+
+What goes on it:
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  DASHBOARD 1: RELEASE HEALTH                                 │
-│  Who looks: Engineering lead, on-call engineer               │
-│  When: After every release, daily check                      │
-│                                                              │
-│  Metrics:                                                    │
-│  • Crash rate (current vs previous version)                  │
-│  • ANR rate (current vs previous version)                    │
-│  • Cold start p50 and p95 (current vs previous)              │
-│  • Error rate by type                                        │
-│  • App store rating (rolling 7-day average)                  │
-│  • Active users (to detect mass uninstalls)                  │
-│                                                              │
-│  Layout:                                                     │
-│  Top row: Big numbers with red/green comparison arrows       │
-│  Middle: Time series showing last 14 days                    │
-│  Bottom: Top 5 crashes/errors by frequency                   │
-├─────────────────────────────────────────────────────────────┤
-│  DASHBOARD 2: PERFORMANCE                                    │
-│  Who looks: Performance team, engineering leads               │
-│  When: Weekly review, after optimizations                    │
-│                                                              │
-│  Metrics:                                                    │
-│  • TTI by device class (high/mid/low)                       │
-│  • FPS p5 during scroll (by screen)                         │
-│  • Memory usage trend (7-day, 30-day)                       │
-│  • JS bundle size trend                                      │
-│  • API latency p50/p95 (by endpoint)                        │
-│  • Image load time p50/p95                                   │
-│                                                              │
-│  Layout:                                                     │
-│  Top row: Performance scores by device class                 │
-│  Middle: Histograms for TTI, FPS, memory                    │
-│  Bottom: Slowest screens and endpoints                      │
-├─────────────────────────────────────────────────────────────┤
-│  DASHBOARD 3: BUSINESS IMPACT                                │
-│  Who looks: Product, engineering leadership                   │
-│  When: Weekly business review, quarterly planning            │
-│                                                              │
-│  Metrics:                                                    │
-│  • Session duration (trending)                               │
-│  • Funnel conversion with performance overlay               │
-│  • Checkout completion rate vs crash rate                    │
-│  • User retention (D1, D7, D30) vs app performance          │
-│  • Store rating trend                                        │
-│  • Performance impact on revenue (correlation)               │
-│                                                              │
-│  Layout:                                                     │
-│  Correlation charts: performance metric vs business metric   │
-│  Goal tracking: current vs target for key metrics            │
-└─────────────────────────────────────────────────────────────┘
++-----------------------------------------------------+
+|  APP HEALTH DASHBOARD                               |
+|                                                     |
+|  Crash-Free Rate      Cold Start (p50)   Active     |
+|  ======== 99.7%       ==== 1.2s          Users      |
+|  ^ 0.1% vs yesterday  ^ 0.1s vs last wk  12,345    |
+|                                                     |
+|  ANR Rate             API Latency (p50)  Error Rate |
+|  ======== 0.12%       ==== 180ms         0.3%       |
+|  * Below threshold    * Healthy          * Healthy  |
+|                                                     |
+|  --- 24h Trend ------------------------------------ |
+|  [sparkline graph of crash-free rate]               |
+|  [sparkline graph of cold start time]               |
+|                                                     |
+|  Recent Deploys                                     |
+|  - v2.4.1 (3h ago) * Healthy                       |
+|  - v2.4.0 (2d ago) * Healthy                       |
++-----------------------------------------------------+
 ```
 
-### Datadog Dashboard Configuration
+**Rules for the TV dashboard:**
+- Maximum 6-8 metrics
+- Color coding: green/yellow/red
+- Trend arrows: up/down vs yesterday or last week
+- Recent deploys visible (so you can correlate deployments with metric changes)
+- NO raw numbers without context (is 180ms good or bad? The color tells you)
+
+**Tier 2: The Investigation Dashboard**
+
+This is what you open when the TV dashboard turns yellow or red. It has more detail.
+
+What goes on it:
+```
+Breakdown by:
+  - Platform (iOS / Android)
+  - App version
+  - Device tier (low / mid / high)
+  - Connection type (wifi / 4g / 3g)
+  - Country
+  - Screen / feature
+
+Time series graphs:
+  - Cold start time by percentile (p50, p90, p99)
+  - FPS distribution during scroll
+  - Memory usage over session lifetime
+  - API latency by endpoint
+  - Error rate by error type
+
+Heatmaps:
+  - Crash rate by device model
+  - ANR rate by Android API level
+  - Startup time by app version
+```
+
+**Tier 3: The Deep Dive Dashboard**
+
+This is for the engineer who's actively debugging an issue. It has everything:
+
+```
+Individual session replays (Datadog Session Replay)
+Full request waterfall for a specific session
+Flame charts for JS thread performance
+Memory allocation timeline
+Specific crash stack traces with symbolication
+Native crash reports (tombstones / crash logs)
+```
+
+### 9.2 Building the TV Dashboard in Datadog
+
+```
+# Datadog Dashboard JSON (simplified)
+# Import this as a new dashboard
+
+Widgets:
+1. Query Value: "Crash-Free Rate"
+   query: 100 - (count(rum.error{type:crash}) / count(rum.session{}) * 100)
+   thresholds: green < 0.5%, yellow 0.5-1%, red > 1%
+
+2. Query Value: "Cold Start p50"
+   query: p50:rum.view.loading_time{view.name:AppRoot}
+   thresholds: green < 1500ms, yellow 1500-3000ms, red > 3000ms
+
+3. Query Value: "API Latency p50"
+   query: p50:rum.resource.duration{resource.type:xhr}
+   thresholds: green < 300ms, yellow 300-500ms, red > 500ms
+
+4. Query Value: "ANR Rate"
+   query: count(rum.long_task{duration:>5000}) / count(rum.session{})
+   thresholds: green < 0.47%, yellow 0.47-1%, red > 1%
+
+5. Timeseries: "Crash-Free Rate (7 days)"
+   query: crash_free_rate by {version}
+
+6. Timeseries: "Cold Start by Version"
+   query: p50:rum.view.loading_time{view.name:AppRoot} by {version}
+```
+
+### 9.3 Daily Metrics Slack Report
+
+Automate a daily report to your team's Slack channel:
 
 ```typescript
-// Example Datadog dashboard definition (via API or Terraform)
-const performanceDashboard = {
-  title: 'Mobile Performance',
-  widgets: [
-    {
-      title: 'Cold Start Time (p50) by Device Class',
-      type: 'timeseries',
-      requests: [
-        {
-          q: 'p50:rum.action.loading_time{@type:view_loading,@device.class:high}',
-          display_type: 'line',
-          style: { palette: 'green' },
-        },
-        {
-          q: 'p50:rum.action.loading_time{@type:view_loading,@device.class:mid}',
-          display_type: 'line',
-          style: { palette: 'yellow' },
-        },
-        {
-          q: 'p50:rum.action.loading_time{@type:view_loading,@device.class:low}',
-          display_type: 'line',
-          style: { palette: 'red' },
-        },
-      ],
-    },
-    {
-      title: 'Crash-Free Sessions',
-      type: 'query_value',
-      requests: [
-        {
-          q: '100 - (count:rum.error{@error.source:crash} / count:rum.session{} * 100)',
-          aggregator: 'avg',
-        },
-      ],
-      conditional_formats: [
-        { comparator: '>=', value: 99.5, palette: 'green_on_white' },
-        { comparator: '>=', value: 99.0, palette: 'yellow_on_white' },
-        { comparator: '<', value: 99.0, palette: 'red_on_white' },
-      ],
-    },
-    // ... more widgets
-  ],
-};
+// functions/daily-metrics-report.ts (runs on a cron job)
+
+interface DailyReport {
+  crashFreeRate: number;
+  coldStartP50: number;
+  coldStartP90: number;
+  apiLatencyP50: number;
+  errorRate: number;
+  activeUsers: number;
+  anrRate: number;
+  appSizeAndroid: number;
+  appSizeIos: number;
+}
+
+async function generateDailyReport(): Promise<DailyReport> {
+  // Pull from Datadog API, Play Console API, App Store Connect API
+  const [ddMetrics, playMetrics, appStoreMetrics] = await Promise.all([
+    fetchDatadogMetrics(),
+    fetchPlayConsoleMetrics(),
+    fetchAppStoreMetrics(),
+  ]);
+  
+  return {
+    crashFreeRate: ddMetrics.crashFreeRate,
+    coldStartP50: ddMetrics.coldStartP50,
+    coldStartP90: ddMetrics.coldStartP90,
+    apiLatencyP50: ddMetrics.apiLatencyP50,
+    errorRate: ddMetrics.errorRate,
+    activeUsers: ddMetrics.activeUsers,
+    anrRate: playMetrics.anrRate,
+    appSizeAndroid: playMetrics.downloadSize,
+    appSizeIos: appStoreMetrics.downloadSize,
+  };
+}
+
+function formatSlackMessage(report: DailyReport): string {
+  const emoji = (value: number, good: number, bad: number) => {
+    if (value <= good) return ':large_green_circle:';
+    if (value <= bad) return ':large_yellow_circle:';
+    return ':red_circle:';
+  };
+  
+  return `
+*Daily App Health Report* — ${new Date().toLocaleDateString()}
+
+${emoji(100 - report.crashFreeRate, 0.5, 1)} *Crash-Free Rate:* ${report.crashFreeRate.toFixed(2)}%
+${emoji(report.coldStartP50, 1500, 3000)} *Cold Start (p50):* ${report.coldStartP50}ms
+${emoji(report.coldStartP90, 3000, 5000)} *Cold Start (p90):* ${report.coldStartP90}ms
+${emoji(report.apiLatencyP50, 300, 500)} *API Latency (p50):* ${report.apiLatencyP50}ms
+${emoji(report.errorRate, 0.5, 1)} *Error Rate:* ${report.errorRate.toFixed(2)}%
+${emoji(report.anrRate, 0.47, 1)} *ANR Rate:* ${report.anrRate.toFixed(2)}%
+
+:bust_in_silhouette: *Active Users:* ${report.activeUsers.toLocaleString()}
+:package: *App Size:* Android ${report.appSizeAndroid}MB / iOS ${report.appSizeIos}MB
+
+_Dashboard: <https://app.datadoghq.com/dashboard/your-dashboard|View Full Dashboard>_
+  `.trim();
+}
 ```
 
 ---
 
-## 11. ALERT THRESHOLDS AND ON-CALL PRACTICES
+## 10. ALERT THRESHOLDS AND ON-CALL
 
-Dashboards show you the state. Alerts tell you when to act.
+Alerts are the automated safety net between "something went wrong" and "a human investigates." Get them right and you catch issues in minutes. Get them wrong and you either miss real problems (too few alerts) or drown in noise (too many alerts).
 
-### Alert Configuration
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  CRITICAL ALERTS (page on-call immediately)                  │
-│                                                              │
-│  Crash rate > 2% of sessions in last 1 hour                 │
-│  ANR rate > 1% of sessions in last 1 hour                   │
-│  5xx error rate > 5% of API calls in last 15 minutes        │
-│  Cold start p95 > 5 seconds (sustained 30 minutes)          │
-│  Memory leak detected (heap growth > 5MB/minute for 10 min) │
-│                                                              │
-│  SEVERITY:  PagerDuty / Opsgenie page                        │
-│  RESPONSE:  Investigate within 15 minutes                    │
-│  ESCALATION: If no response in 30 minutes, page team lead   │
-├─────────────────────────────────────────────────────────────┤
-│  WARNING ALERTS (notify Slack channel)                        │
-│                                                              │
-│  Crash rate > 1% of sessions (rolling 24h)                   │
-│  TTI p95 > 3 seconds (rolling 24h)                           │
-│  FPS p5 < 30 during scroll (rolling 24h)                     │
-│  App size increased > 5% from last release                   │
-│  New crash cluster (>100 occurrences, new signature)         │
-│  API latency p95 > 2x normal baseline                        │
-│                                                              │
-│  SEVERITY:  Slack notification                               │
-│  RESPONSE:  Investigate same business day                    │
-│  ESCALATION: If not addressed in 48 hours, create ticket     │
-├─────────────────────────────────────────────────────────────┤
-│  INFORMATIONAL ALERTS (weekly digest)                         │
-│                                                              │
-│  JS bundle size trend (4-week growth rate)                   │
-│  Memory usage trend (4-week growth rate)                     │
-│  Slowest screens by TTI (weekly top 10)                      │
-│  Most impactful crashes (weekly top 10 by sessions affected) │
-│  Play Console / App Store vitals summary                     │
-│                                                              │
-│  SEVERITY:  Email / Weekly report                            │
-│  RESPONSE:  Review in weekly performance meeting             │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Post-Release Monitoring Checklist
+### 10.1 The Alert Hierarchy
 
 ```
-After every release, the releasing engineer should:
+SEVERITY 1 (P0) — Page on-call immediately, wake people up
+  - Crash-free rate drops below 98% (was 99.5%+)
+  - ANR rate exceeds 2%
+  - API error rate exceeds 10%
+  - App completely unresponsive (all health checks failing)
 
-□ 15 MINUTES AFTER RELEASE:
-  - Check crash rate on new version vs previous
-  - Verify no new crash clusters
-  - Check API error rates (new version might hit new endpoints)
+SEVERITY 2 (P1) — Notify in Slack, investigate within 1 hour
+  - Crash-free rate drops below 99%
+  - ANR rate exceeds 0.47% (Play Console bad behavior threshold)
+  - Cold start p90 exceeds 5 seconds
+  - API latency p95 exceeds 3 seconds
+  - Memory warnings spike above 5% of sessions
 
-□ 1 HOUR AFTER RELEASE:
-  - Compare crash rate with 1-hour baseline
-  - Check ANR rate
-  - Verify cold start time hasn't regressed
-  - Check Play Console vitals pre-launch report (if available)
+SEVERITY 3 (P2) — Notify in Slack, investigate within 1 business day
+  - Crash-free rate drops below 99.5%
+  - Cold start p50 exceeds 2 seconds
+  - API latency p50 exceeds 500ms
+  - JS error rate exceeds 1%
+  - App size exceeds your target by 20%+
 
-□ 24 HOURS AFTER RELEASE:
-  - Full vitals comparison (crash, ANR, startup, memory)
-  - Check app store reviews for performance complaints
-  - Review performance dashboard for regressions
-  - Confirm no memory leak trends
-
-□ 1 WEEK AFTER RELEASE:
-  - Compare all metrics against 7-day baseline
-  - Review Play Console / App Store Connect vitals
-  - Check long-running session metrics (memory leaks)
-  - Share release health report with team
+SEVERITY 4 (P3) — Track in dashboard, address in sprint planning
+  - Cold start trending up over 7 days
+  - Memory usage trending up (potential slow leak)
+  - API latency trending up
+  - Bundle size growing faster than features justify
 ```
 
-### The Performance Budget
+### 10.2 Setting Up Alerts in Datadog
 
-Set explicit budgets that new features must stay within:
+```
+# Datadog Monitor: Crash-Free Rate P0
+# Type: Metric Monitor
+# Query: 100 - (count(rum.error{type:crash}).as_count() / count(rum.session{}).as_count() * 100)
+# Evaluation window: Last 15 minutes
+# Alert threshold: < 98
+# Warning threshold: < 99
+# Notify: @pagerduty-mobile-oncall @slack-mobile-alerts
+# Message: |
+#   ## P0: Crash-Free Rate Critical
+#   
+#   Current crash-free rate: {{value}}%
+#   Threshold: 98%
+#   
+#   **Immediate actions:**
+#   1. Check recent deployments: {{dashboard_link}}
+#   2. Check Sentry for new crash groups
+#   3. If caused by new version, prepare hotfix or rollback
+#   
+#   **Recent deploys:** Check the releases dashboard
+```
 
-```typescript
-// performance-budget.ts
+```
+# Datadog Monitor: ANR Rate P1
+# Type: Metric Monitor
+# Query: count(rum.long_task{duration:>5000}).as_count() / count(rum.session{}).as_count() * 100
+# Evaluation window: Last 1 hour
+# Alert threshold: > 0.47
+# Warning threshold: > 0.3
+# Notify: @slack-mobile-alerts
+# Message: |
+#   ## P1: ANR Rate Exceeds Play Console Threshold
+#   
+#   Current ANR rate: {{value}}%
+#   Play Console bad behavior threshold: 0.47%
+#   
+#   This affects Play Store visibility. Investigate within 1 hour.
+#   
+#   Common causes:
+#   - Heavy JS thread work during app startup
+#   - Synchronous storage reads
+#   - Large JSON parsing on main thread
+```
 
-export const PERFORMANCE_BUDGET = {
-  // Cold start
-  tti: {
-    p50_max_ms: 800,
-    p95_max_ms: 2000,
-    regression_threshold_ms: 100, // Alert if TTI increases by 100ms+
-  },
+### 10.3 Alert Anti-Patterns
 
-  // Frame rate
-  fps: {
-    scroll_p5_min: 45,       // Worst 5% during scroll must be > 45fps
-    animation_p5_min: 50,     // Worst 5% during animation must be > 50fps
-  },
+**Anti-pattern 1: Alerting on absolute counts instead of rates.**
 
-  // Memory
-  memory: {
-    peak_js_heap_mb: 150,    // JS heap should never exceed 150MB
-    growth_rate_mb_per_min: 1, // Should not grow more than 1MB/min sustained
-  },
+```
+# BAD: "Alert when errors > 100"
+# Why it's bad: 100 errors when you have 10 users = catastrophe
+#               100 errors when you have 1M users = statistical noise
 
-  // App size
-  appSize: {
-    max_download_mb: 40,      // Maximum download size
-    max_increase_per_release_percent: 3, // Max 3% increase per release
-  },
+# GOOD: "Alert when error RATE > 1%"
+```
 
-  // Network
-  network: {
-    api_p95_ms: 1000,         // API calls p95 < 1 second
-    initial_data_kb: 50,      // First screen data < 50KB
-  },
+**Anti-pattern 2: No recovery notification.**
 
-  // Stability
-  stability: {
-    crash_free_rate_min: 99.5, // 99.5%+ crash-free sessions
-    anr_rate_max: 0.2,        // < 0.2% ANR rate
-  },
-} as const;
+```
+# BAD: Only sending alerts when things break
+# The on-call person doesn't know when it resolves
+
+# GOOD: Configure "recovery" notifications
+# Datadog → Monitor → "Notify on recovery" → enabled
+# This sends a green "resolved" message when the metric returns to normal
+```
+
+**Anti-pattern 3: Alerting on every individual error.**
+
+```
+# BAD: An alert for every crash
+# At 10,000 DAU with 0.5% crash rate, that's 50 alerts per day
+
+# GOOD: Alert on rate changes and new crash groups
+# - Alert when crash-free rate drops
+# - Alert when a NEW crash signature appears (via Sentry)
+# - Don't alert on every individual crash
+```
+
+**Anti-pattern 4: Not including context in alert messages.**
+
+```
+# BAD:
+# "Alert: Crash rate is high"
+
+# GOOD:
+# "Alert: Crash rate 2.3% (threshold: 1.09%)
+#  - Platform: Android
+#  - Most affected version: 2.4.1 (released 3 hours ago)
+#  - Top crash: NullPointerException in PaymentModule.java:142
+#  - Affected users: ~450
+#  - Dashboard: [link]
+#  - Sentry issue: [link]"
+```
+
+### 10.4 On-Call Rotation
+
+If your team is big enough (4+ mobile engineers), set up a rotation:
+
+```
+On-Call Structure:
+- Primary on-call: 1 week rotation
+- Secondary (backup): Next person in rotation
+- Escalation: If primary doesn't acknowledge in 15 min, page secondary
+- Business hours only: For P2-P3 alerts
+- 24/7: For P0-P1 alerts only
+
+What on-call does:
+1. Acknowledge alerts within 15 minutes
+2. Triage: Is this a real problem or a false alarm?
+3. If real: Start investigating, update the team
+4. If deploy-related: Decide whether to rollback or hotfix
+5. Document the incident (even small ones)
+
+What on-call does NOT do:
+- Fix every bug during their shift
+- Guarantee zero alerts
+- Stay awake all night for P3 issues
+```
+
+### 10.5 The Runbook
+
+Every alert should link to a runbook. A runbook is a document that tells the on-call person exactly what to do when an alert fires.
+
+```markdown
+# Runbook: Crash-Free Rate Drop
+
+## Severity
+P0 if < 98%, P1 if < 99%, P2 if < 99.5%
+
+## First Response (< 5 minutes)
+1. Open Datadog dashboard: [link]
+2. Check if the drop correlates with a recent deploy
+   - Go to Releases: [link]
+   - If yes: prepare to rollback (see Rollback section below)
+3. Open Sentry: [link]
+   - Sort by "first seen" to find new crash groups
+   - Check the top crash group for affected count and stack trace
+
+## Investigation (5-30 minutes)
+1. Identify the crash signature
+2. Check affected platforms (iOS only? Android only? Both?)
+3. Check affected versions
+4. Check affected device models (hardware-specific?)
+5. Check affected OS versions
+
+## Rollback Decision
+Rollback if:
+- Crash-free rate < 97%
+- The crash is in a critical path (launch, payment, auth)
+- No fix is available within 2 hours
+
+## Rollback Steps
+### Android (Play Console)
+1. Go to Play Console -> Release management -> App releases
+2. Click "Manage" on the production track
+3. Halt the rollout of the current release
+4. Start a new release with the previous version
+
+### iOS (App Store Connect)
+1. Go to App Store Connect -> Your App
+2. Remove the current version from sale (if needed)
+3. Use EAS to build the previous version
+4. Submit for expedited review
+
+## Communication
+1. Post in #mobile-incidents: "Investigating crash-free rate drop"
+2. Update every 30 minutes until resolved
+3. Post-incident: Write a brief post-mortem
 ```
 
 ---
 
-## CHAPTER SUMMARY
+## 11. THE METRICS LIFECYCLE
 
-Mobile metrics that matter fall into three categories: user-facing (what users experience), system health (what predicts future problems), and business impact (what moves the needle for your product).
+Here's how these metrics should flow through your development process:
 
-The essential metrics:
+### 11.1 Before You Ship
 
-- **Cold start / TTI**: Target < 1s on mid-range devices. Measure with custom instrumentation and Datadog RUM.
-- **FPS / jank**: Measure p5 during scroll. Target > 45 FPS on all device classes.
-- **Memory**: Track JS heap and total app memory. Alert on sustained growth (leak detection).
-- **Network**: Track API latency p50/p95 and payload sizes. Segment by connection type.
-- **App size**: Set a budget, track in CI, gate releases on regressions.
-- **Play Console vitals**: Crash rate < 1%, ANR rate < 0.5%. These affect store ranking.
-- **App Store Connect**: Hang rate, launch time, memory — Apple will email you if you're bad.
-- **Datadog RUM**: Session-level traces for debugging individual user experiences.
+```
+Pre-release checklist:
+[ ] Cold start time measured on test devices (low/mid/high tier)
+[ ] FPS profiled on lowest-tier supported device
+[ ] Memory profiled with 10-minute usage session
+[ ] Bundle size compared to previous release
+[ ] No new ANR triggers in automated tests
+[ ] API latency tested on throttled network (3G simulation)
+```
 
-The operational practices that make metrics actionable:
+### 11.2 During Rollout
 
-- **Dashboards**: Release health, performance, and business impact — three views for three audiences
-- **Alerts**: Critical (page on-call), Warning (Slack), Informational (weekly digest)
-- **Post-release monitoring**: Structured checklist at 15 minutes, 1 hour, 24 hours, and 1 week
-- **Performance budgets**: Explicit thresholds that new features must not exceed
+```
+Staged rollout monitoring (Android):
+  1% rollout -> Wait 24 hours -> Check vitals
+  5% rollout -> Wait 24 hours -> Check vitals
+  20% rollout -> Wait 24 hours -> Check vitals
+  50% rollout -> Wait 24 hours -> Check vitals
+  100% rollout
 
-The teams that build the best mobile apps are not the ones with the fastest code — they're the ones with the best visibility into how their code performs in the real world. Measure relentlessly, segment by device class, and act on regressions before your users notice them.
+At each stage, check:
+[ ] Crash-free rate is within 0.1% of previous version
+[ ] ANR rate hasn't increased
+[ ] Cold start time hasn't regressed
+[ ] No new crash signatures in Sentry
+[ ] API error rate stable
+```
+
+### 11.3 After Ship (Ongoing)
+
+```
+Weekly review (in sprint retrospective):
+- Review TV dashboard trends
+- Compare current metrics to 4-week average
+- Identify any slow degradation (boiling frog problems)
+- Review alert fatigue — are we getting too many false alarms?
+- Review on-call incidents from the week
+
+Monthly review:
+- Compare Play Console / App Store Connect benchmarks to peers
+- Review app size growth trend
+- Review cold start trend across app versions
+- Plan performance improvement work for next sprint
+```
 
 ---
 
-*Next: [Chapter 24: Internationalization & Localization]*
-*Previous: [Chapter 22: Feature Flags & Remote Configuration]*
+## 12. QUICK REFERENCE: ALL THRESHOLDS IN ONE PLACE
+
+For when you're setting up alerts and need the numbers fast:
+
+### Cold Start / TTI
+| Metric | Green | Yellow | Red |
+|--------|-------|--------|-----|
+| Cold start (p50) | < 1s | 1-2s | > 2s |
+| Cold start (p90) | < 2s | 2-3s | > 3s |
+| Cold start (p99) | < 3s | 3-5s | > 5s |
+
+### FPS / Jank
+| Metric | Green | Yellow | Red |
+|--------|-------|--------|-----|
+| Scroll FPS (p10) | > 55 | 45-55 | < 45 |
+| Animation FPS (p10) | > 58 | 50-58 | < 50 |
+| Dropped frames/min | < 5 | 5-15 | > 15 |
+
+### Memory
+| Metric | Green | Yellow | Red |
+|--------|-------|--------|-----|
+| JS heap | < 100MB | 100-200MB | > 200MB |
+| Total app memory | < 200MB | 200-400MB | > 400MB |
+| Memory growth | Stable | < 10MB/min | > 10MB/min |
+
+### Network
+| Metric | Green | Yellow | Red |
+|--------|-------|--------|-----|
+| API latency (p50) | < 200ms | 200-500ms | > 500ms |
+| API latency (p95) | < 500ms | 500ms-1s | > 1s |
+| Error rate | < 0.1% | 0.1-1% | > 1% |
+
+### App Size
+| Platform | Green | Yellow | Red |
+|----------|-------|--------|-----|
+| Android (AAB) | < 50MB | 50-100MB | > 150MB |
+| iOS (IPA) | < 50MB | 50-150MB | > 200MB |
+
+### Store Vitals
+| Metric | Green | Bad Behavior (Google) |
+|--------|-------|-----------------------|
+| Crash rate (user-perceived) | < 0.5% | >= 1.09% |
+| ANR rate (user-perceived) | < 0.2% | >= 0.47% |
+
+### Alert Severity
+| Severity | Response Time | Example |
+|----------|--------------|---------|
+| P0 | Immediate (15 min) | Crash-free < 98% |
+| P1 | 1 hour | ANR > 0.47%, cold start p90 > 5s |
+| P2 | 1 business day | Crash-free < 99.5%, latency p50 > 500ms |
+| P3 | Next sprint | Trending metrics |
+
+---
+
+## Key Takeaways
+
+1. **Metrics are not optional.** If you're not measuring cold start, FPS, memory, network latency, and app size, you're flying blind. Set up tracking before your first production deploy, not after.
+
+2. **Know the thresholds that matter to the stores.** Google Play's 0.47% ANR rate and 1.09% crash rate thresholds directly affect your app's visibility. Apple's Xcode Organizer metrics affect your App Review relationship. These aren't vanity metrics — they're business metrics.
+
+3. **Build three tiers of dashboards.** A TV dashboard for daily glancing (6-8 metrics, color-coded). An investigation dashboard for when things go wrong. A deep-dive dashboard for active debugging.
+
+4. **Alerts should have context and runbooks.** An alert that says "something is broken" wastes the on-call person's time. An alert that says "crash rate spiked to 2.3% after v2.4.1 deployed 3 hours ago, top crash is NullPointerException in PaymentModule.java:142, here's the Sentry link and the rollback steps" saves hours.
+
+5. **Segment everything.** A p50 cold start of 1.2s that averages across all devices hides the fact that it's 600ms on iPhone 15 Pro and 3.8s on a 4-year-old Samsung Galaxy A10. Always segment by platform, device tier, connection type, and app version.
+
+6. **Watch for boiling frogs.** A cold start that increases by 50ms per release doesn't trigger alerts. But after 10 releases, it's 500ms slower. Use weekly and monthly reviews to catch slow degradation.
+
+7. **The daily Slack report is the most important automation you'll build.** A human won't check a dashboard every day. But they'll glance at a Slack message. Make the data go where the people are.
+
+---
+
+**Next up:** [Chapter 24: Incident Response] — what to do when the alerts fire and the metrics are red. Because preparation is the difference between a 30-minute incident and a 3-day crisis.

@@ -12,6 +12,17 @@
 
 > **Part I — Foundations** | Prerequisites: Chapters 1-2 | Difficulty: Intermediate to Advanced
 
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- `setState` does not update the screen; it schedules work that Fiber processes in a priority-aware, interruptible render phase before committing DOM mutations
+- Reconciliation diffs the old and new element trees in O(n) using two heuristics: different element types produce different trees, and `key` props signal stability across renders
+- The Fiber architecture splits rendering into render phase (pure, interruptible) and commit phase (synchronous, side-effectful); this split enables concurrent features
+- `useTransition` and `useDeferredValue` mark updates as low-priority so the UI stays responsive during expensive renders; Suspense is the boundary that shows fallback UI during async operations
+- The React Compiler auto-memoizes components and hooks, eliminating most manual `useMemo`/`useCallback`; understand what it does so you know when to trust it
+
+</details>
+
 Here's what most React developers get dangerously wrong: they think `setState` updates the screen. It doesn't. `setState` tells React "something changed." What happens next is a complex, interruptible, priority-aware pipeline that decides *what* changed, *when* to update it, and *how* to minimize the DOM mutations needed to reflect the new state.
 
 This pipeline is called **reconciliation**, and the engine that powers it is called **Fiber.** Understanding Fiber is not academic trivia — it's the difference between an app that stays responsive under load and an app that freezes for 300ms when you type in a search box.

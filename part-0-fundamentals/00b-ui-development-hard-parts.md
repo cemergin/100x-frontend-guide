@@ -12,6 +12,17 @@
 
 > **Part 0 — JavaScript & React Fundamentals** | Prerequisites: Chapter 0 | Difficulty: Beginner to Intermediate
 
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- Every UI framework solves one problem: keeping the screen in sync with application data; the DOM is a C++ data structure accessed through JavaScript bindings, and manipulating it is expensive
+- The virtual DOM is React's answer: diff a lightweight JS tree against the previous version, then apply the minimum set of real DOM mutations
+- Reconciliation uses O(n) heuristics (same type = update, different type = teardown) that are fast enough for 60fps rendering in practice
+- Components are just functions that return UI descriptions; hooks are closures over a hidden array of state slots managed by React
+- The declarative paradigm won because it eliminates manual DOM bookkeeping and makes UI a pure function of state
+
+</details>
+
 Every UI framework that has ever existed — React, Angular, Vue, Svelte, jQuery, Backbone, Ember, React Native, SwiftUI, Jetpack Compose — solves the same fundamental problem: **keeping what the user sees in sync with the application's data.**
 
 That's it. That's the entire problem. You have data (a list of todos, a user profile, a shopping cart). You have a screen (pixels on a display). When the data changes, the screen needs to change to match. When the user interacts with the screen (types in an input, clicks a button), the data needs to change to match.

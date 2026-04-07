@@ -1,5 +1,5 @@
 <!--
-  CHAPTER: 7
+  CHAPTER: 8
   TITLE: Navigation Architecture
   PART: II — React Native & Expo
   PREREQS: Chapter 5
@@ -11,6 +11,17 @@
 # Chapter 7: Navigation Architecture
 
 > **Part II — React Native & Expo** | Prerequisites: Chapter 5 | Difficulty: Intermediate
+
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- Expo Router v4 gives you file-based routing (like Next.js) for React Native; your file system IS your route configuration
+- React Navigation 7 is the imperative layer underneath; use Expo Router for most apps, drop to React Navigation when you need fine-grained control
+- Lazy-load screens by default, prefetch high-probability routes, and memoize screen components to keep navigation transitions under 100ms
+- Type-safe navigation (via Expo Router's typed routes or React Navigation's ParamList generics) eliminates an entire class of runtime crashes from wrong route names or missing params
+- Deep linking requires symmetric configuration on both iOS (Universal Links) and Android (App Links); test with both platforms or it will silently break on one
+
+</details>
 
 Navigation is the skeleton of your mobile app. Get it wrong and everything — performance, deep linking, state management, testing, analytics — gets harder. Get it right and half your app's architecture falls into place.
 

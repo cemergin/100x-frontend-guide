@@ -1,5 +1,5 @@
 <!--
-  CHAPTER: 24
+  CHAPTER: 27
   TITLE: Vercel Platform Mastery
   PART: VI — Vercel & the Web
   PREREQS: None
@@ -15,6 +15,17 @@
 > "Vercel is where frontend developers go to deploy, and where senior engineers go to build production systems."
 
 ---
+
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- Vercel in 2026 is a full compute platform, not just a Next.js host; Fluid Compute reuses function instances across concurrent requests, Node.js 24 is the default, and the function timeout is 300 seconds
+- Active CPU pricing means you pay for computation, not wall-clock time; idle time waiting on DB queries or external APIs is free
+- Vercel Storage includes Blob (file storage), Edge Config (sub-millisecond key-value reads), and Marketplace integrations for Postgres (Neon) and Redis (Upstash)
+- AI Gateway provides unified multi-provider routing with automatic failover, cost tracking, and rate limiting across OpenAI, Anthropic, Google, and others
+- Preview deployments on every PR, rolling releases for production, and Speed Insights + Analytics give you a deployment pipeline that most teams never outgrow
+
+</details>
 
 ## The Pitch You Need to Forget
 

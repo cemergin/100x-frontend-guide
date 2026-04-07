@@ -1,5 +1,5 @@
 <!--
-  CHAPTER: 15
+  CHAPTER: 16
   TITLE: Monorepo Architecture — Mobile + Web from One Repo
   PART: IV — Architecture at Scale
   PREREQS: Chapters 4, 5
@@ -11,6 +11,17 @@
 # Chapter 15: Monorepo Architecture — Mobile + Web from One Repo
 
 > **Part IV — Architecture at Scale** | Prerequisites: Chapters 4, 5 | Difficulty: Intermediate to Advanced
+
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- For most teams building mobile + web products, a monorepo is the right default; the multi-repo coordination tax compounds with every cross-platform feature
+- Use Turborepo for task orchestration (caching, parallel builds, dependency-aware execution) and pnpm workspaces for package management
+- Share Zod schemas, API types, UI components, and utilities across React Native and Next.js via internal packages; keep platform-specific code in platform packages
+- Remote caching (Vercel or self-hosted) means CI only rebuilds what actually changed; this turns 45-minute builds into 5-minute builds
+- next-forge is Vercel's production-grade monorepo starter; use it as a reference architecture even if you do not adopt it wholesale
+
+</details>
 
 Here's a story I've seen play out at least a dozen times. A startup launches with a React Native app. Six months later, they need a web dashboard. Someone creates a new repo. A year later, there are four repos: mobile, web, API, and a "shared" package that nobody trusts because it's always out of date. The Zod schemas in the API repo don't match the types in the web repo. Someone renamed a field in the mobile repo and forgot to update the API client. The intern spent three days tracking down a bug that turned out to be a version mismatch between the validation library in mobile and web.
 

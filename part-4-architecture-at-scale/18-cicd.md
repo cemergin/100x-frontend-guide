@@ -1,5 +1,5 @@
 <!--
-  CHAPTER: 18
+  CHAPTER: 19
   TITLE: CI/CD for Mobile & Web
   PART: IV — Architecture at Scale
   PREREQS: Chapters 5, 6, 15
@@ -11,6 +11,17 @@
 # Chapter 18: CI/CD for Mobile & Web
 
 > **Part IV — Architecture at Scale** | Prerequisites: Chapters 5, 6, 15 | Difficulty: Intermediate to Advanced
+
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- Build only what changed (Turborepo `--filter` + GitHub Actions path triggers); a README typo should not trigger an iOS build
+- Use EAS Build for mobile CI (cloud compilation, signing, no local Mac needed) and Vercel for web CI (preview deployments on every PR, production on merge to main)
+- Enforce performance budgets in CI: block PRs that exceed bundle size limits, Lighthouse score thresholds, or build time ceilings
+- Automate version bumps with Changesets; let CI compute `versionCode`/`buildNumber` from git history so humans never manually manage version numbers
+- Cancel superseded CI runs, cache aggressively (node_modules, Turborepo, Gradle, CocoaPods), and fail fast on lint/type errors before running expensive builds
+
+</details>
 
 Here's the dirty secret about most mobile+web monorepos: **their CI/CD pipeline is the most expensive, most fragile, least understood part of the entire system.** Teams that build beautiful React Native apps with immaculate state management and pixel-perfect designs will have a 45-minute CI pipeline held together with duct tape, retry loops, and a Slack message that says "CI is flaky again, just re-run it."
 

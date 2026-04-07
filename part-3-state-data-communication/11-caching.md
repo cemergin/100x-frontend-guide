@@ -1,5 +1,5 @@
 <!--
-  CHAPTER: 11
+  CHAPTER: 12
   TITLE: Caching Strategies — Mobile & Web
   PART: III — State, Data & Communication
   PREREQS: Chapters 9-10
@@ -11,6 +11,17 @@
 # Chapter 11: Caching Strategies — Mobile & Web
 
 > **Part III — State, Data & Communication** | Prerequisites: Chapters 9-10 | Difficulty: Intermediate
+
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- Caching is not a bolt-on optimization; it is a first-class architectural decision that determines perceived speed, offline capability, and server costs
+- Your app has five cache layers: in-memory (TanStack Query), local storage (MMKV), HTTP cache, CDN edge, and server-side (Redis/Upstash); each has different speed, lifetime, and invalidation characteristics
+- MMKV is 30x faster than AsyncStorage for local persistence; use it for everything except large blobs
+- HTTP caching headers (`Cache-Control`, `ETag`, `stale-while-revalidate`) are the highest-leverage optimization most teams ignore; set them correctly and the browser/CDN does the work for you
+- Cache invalidation is the hard part; use time-based expiry for most data, event-driven invalidation for critical data, and never cache user-specific data on shared CDN edges
+
+</details>
 
 Every millisecond your user stares at a loading spinner is a millisecond they're reconsidering whether your app is worth their time. And here's the uncomfortable truth: **most of those loading spinners are unnecessary.** The data was already fetched thirty seconds ago. The image was already downloaded. The configuration hasn't changed in a week. But because nobody thought about caching — really thought about it, as a first-class architectural concern — the app hits the network again, waits for the round trip, parses the response, and finally renders what it already had.
 

@@ -1,5 +1,5 @@
 <!--
-  CHAPTER: 26
+  CHAPTER: 29
   TITLE: The AI-Powered Frontend
   PART: VI — Vercel & Web
   PREREQS: Chapter 24
@@ -11,6 +11,17 @@
 # Chapter 26: The AI-Powered Frontend
 
 > **Part VI — Vercel & Web** | Prerequisites: Chapter 24 | Difficulty: Intermediate
+
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- The Vercel AI SDK is a three-layer architecture (Core, UI, RSC) that handles streaming, tool calling, structured output, and multi-provider routing so you focus on the product experience
+- `useChat` manages conversation state, streaming, and error handling for chat interfaces; `useCompletion` handles single-turn generation; both work on web and React Native
+- Tool calling lets LLMs execute functions mid-conversation using Zod-validated schemas; this is how you build AI features that take actions, not just generate text
+- AI Gateway routes between providers (OpenAI, Anthropic, Google) with automatic failover, cost tracking, and rate limiting; never hardcode a single provider
+- Structured output with Zod schemas forces the model to return typed JSON you can safely render; use it whenever you need the AI response to drive UI, not just display text
+
+</details>
 
 Here is the reality of frontend engineering in 2026: if you are not building AI features into your product, your competitors are. And they are shipping faster than you think.
 

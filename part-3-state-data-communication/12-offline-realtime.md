@@ -1,5 +1,5 @@
 <!--
-  CHAPTER: 12
+  CHAPTER: 13
   TITLE: Offline-First & Real-Time Patterns
   PART: III — State, Data & Communication
   PREREQS: Chapters 9-11
@@ -11,6 +11,17 @@
 # Chapter 12: Offline-First & Real-Time Patterns
 
 > **Part III — State, Data & Communication** | Prerequisites: Chapters 9-11 | Difficulty: Advanced
+
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- Offline-first inverts the default: the local device is the source of truth, the network is a sync mechanism; the app works fully offline and syncs when connectivity returns
+- Legend State provides reactive state with built-in persistence and sync; it handles the queue-based mutation pattern so you do not have to build it from scratch
+- Conflict resolution strategies range from simple (last-write-wins) to complex (CRDTs); choose based on your data model and how likely concurrent edits are
+- WebSockets are the standard for real-time; use heartbeats, exponential reconnection backoff, and message ordering to handle the reality of unreliable connections
+- Optimistic UI with rollback is essential for offline-first -- update the UI instantly, queue the mutation, and revert if the server rejects it
+
+</details>
 
 Here's a scenario that happens more often than you'd think: your user is on a subway, editing a document, adding items to a cart, or composing a message. The cell signal drops. What happens next determines whether your app is a tool they trust or a toy they tolerate.
 

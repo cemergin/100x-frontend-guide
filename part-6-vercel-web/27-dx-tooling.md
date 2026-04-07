@@ -1,5 +1,5 @@
 <!--
-  CHAPTER: 27
+  CHAPTER: 30
   TITLE: Developer Experience & Tooling
   PART: VI — Vercel & Web
   PREREQS: None
@@ -11,6 +11,17 @@
 # Chapter 27: Developer Experience & Tooling
 
 > **Part VI — Vercel & Web** | Prerequisites: None | Difficulty: Beginner to Intermediate
+
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- The tools you use every day (linter, bundler, package manager, debugger) have more cumulative impact on team velocity than your framework choice
+- Biome replaces ESLint + Prettier with a single Rust-based tool that is 20-100x faster; one config file, zero conflicts, 200+ lint rules enabled by default
+- Use pnpm for package management (strict node_modules, fast installs, workspace support); Turbopack for Next.js bundling; Metro for React Native
+- Claude Code accelerates frontend development for architecture decisions, debugging, code generation, and refactoring; treat it as a senior pair programmer, not a code autocomplete
+- The ideal DX setup in 2026: Biome for lint+format, pnpm for packages, Turbopack/Metro for bundling, Reactotron for RN debugging, Storybook for component development, and Changesets for versioning
+
+</details>
 
 I want to tell you something that took me years to understand: **the tools you use every day matter more than the framework you choose.** A team on a mediocre framework with excellent tooling will outship a team on the best framework with terrible tooling, every single time.
 

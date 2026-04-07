@@ -1,5 +1,5 @@
 <!--
-  CHAPTER: 10
+  CHAPTER: 11
   TITLE: Data Fetching & Server Communication
   PART: III — State, Data & Communication
   PREREQS: Chapter 9
@@ -11,6 +11,17 @@
 # Chapter 10: Data Fetching & Server Communication
 
 > **Part III — State, Data & Communication** | Prerequisites: Chapter 9 | Difficulty: Intermediate to Advanced
+
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- Build a typed API client with interceptors, automatic token refresh, and standardized error handling; never scatter raw `fetch` calls across components
+- TanStack Query's advanced patterns -- query factories, dependent queries, prefetching, infinite scroll -- solve 90% of data fetching complexity out of the box
+- Optimistic updates should always include rollback logic; use TanStack Query's `onMutate`/`onError`/`onSettled` lifecycle to update the cache optimistically and revert on failure
+- Choose REST for simple CRUD, GraphQL when clients need flexible data shapes, and tRPC when you own both ends of the stack in a TypeScript monorepo
+- Retry with exponential backoff and jitter; never retry 401s, always retry 503s, and use idempotency keys for mutations
+
+</details>
 
 Chapter 9 taught you that server state is a separate category that deserves its own tool. This chapter is the deep dive into everything that tool touches: how your frontend talks to your backend, how it handles the messy reality of networks, and how you build an API layer that stays maintainable at scale.
 

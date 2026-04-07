@@ -1,5 +1,5 @@
 <!--
-  CHAPTER: 28
+  CHAPTER: 31
   TITLE: Beast Mode — Frontend Operational Readiness
   PART: VI — Vercel & the Web
   PREREQS: None (all chapters helpful)
@@ -11,6 +11,17 @@
 # Chapter 28: Beast Mode — Frontend Operational Readiness
 
 > **Part VI — Vercel & the Web** | Prerequisites: None (all chapters helpful) | Difficulty: All levels
+
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- Beast Mode means knowing how everything connects -- component library, state architecture, deployment pipeline, monitoring, performance budgets -- so you can operate the system under pressure
+- On day one at a new codebase: get access to every console (Vercel, Sentry, Firebase, App Store Connect, Play Console), map the monorepo structure, identify the CI/CD pipeline, and set your baselines
+- Build a frontend health dashboard covering crash-free rate, cold start, bundle size, build time, and Core Web Vitals; review it weekly
+- Incident readiness means you can symbolicate a crash, push an OTA hotfix, communicate a staged rollout, and confirm resolution -- all within hours, not days
+- Elevate your team by documenting architecture decisions, establishing component patterns, automating quality checks, and making the right thing the easy thing
+
+</details>
 
 > *"You need to be ready — your setup, synths, drum machines, sounds, presets. So when you show up at someone's studio you are ready to throw down."* — Nick Hook
 

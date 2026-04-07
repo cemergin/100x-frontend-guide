@@ -1,5 +1,5 @@
 <!--
-  CHAPTER: 20
+  CHAPTER: 21
   TITLE: Codebase Management, DX & Editor Mastery
   PART: IV — Architecture at Scale
   PREREQS: Chapters 0d, 15
@@ -11,6 +11,17 @@
 # Chapter 20: Codebase Management, DX & Editor Mastery
 
 > **Part IV — Architecture at Scale** | Prerequisites: Chapters 0d, 15 | Difficulty: Beginner to Intermediate
+
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- Your codebase is a product and your teammates are its users; invest in one-command setup, auto-formatting on save, and pre-commit hooks that catch issues before CI
+- Master VS Code shortcuts, multi-cursor editing, and the integrated debugger; the compound interest of 2 seconds saved per interaction across hundreds of daily interactions is enormous
+- ESLint flat config (or Biome) plus Prettier (or Biome formatting) plus EditorConfig gives you consistent code style with zero code-review arguments
+- Husky + lint-staged runs format, lint, and type-check on staged files in seconds at commit time; everything that runs in CI should also run locally
+- Use Renovate (or Dependabot) for automated dependency updates; treat outdated dependencies as tech debt that compounds silently
+
+</details>
 
 Here's a truth that takes most engineers too long to learn: **your codebase is a product, and your teammates are its users.** The features you ship to customers are built on top of the developer experience you ship to each other. A fast, well-organized, lint-clean, auto-formatted codebase with one-command setup is a force multiplier. A messy one with inconsistent formatting, no linting, manual setup steps, and mystery configurations is a tax on every feature, every review, and every onboarding.
 

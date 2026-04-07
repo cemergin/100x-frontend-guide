@@ -1,5 +1,5 @@
 <!--
-  CHAPTER: 24
+  CHAPTER: 26
   TITLE: Payments & Money Handling — Stripe, IAP & Revenue
   PART: V — Deployment & Operations
   PREREQS: Chapters 5, 6, 22
@@ -15,6 +15,17 @@
 > "Move fast and break things" does not apply to payment code. Move carefully and break nothing.
 
 ---
+
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- Payment bugs cost real money -- double charges, missed charges, leaked API keys; treat payment code as the most consequential code you write
+- Use Stripe's PaymentIntent flow with server-side confirmation and webhook verification; never trust the client to confirm payment success
+- Always use idempotency keys on mutations to prevent double-charging on retries; never log card numbers, CVVs, or full tokens
+- For in-app purchases (digital goods on iOS/Android), use RevenueCat to abstract Apple IAP and Google Play Billing; for physical goods or services, use Stripe directly and avoid the 30% platform commission
+- Test with every Stripe test card scenario: success, decline, 3D Secure, network timeout, and webhook replay; payment code that "works on happy path" is not tested
+
+</details>
 
 ## The Money Mindset
 

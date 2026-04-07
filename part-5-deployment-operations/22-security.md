@@ -1,5 +1,5 @@
 <!--
-  CHAPTER: 22
+  CHAPTER: 24
   TITLE: Security & Data Protection
   PART: V — Deployment & Operations
   PREREQS: Chapters 5, 6
@@ -11,6 +11,17 @@
 # Chapter 22: Security & Data Protection
 
 > **Part V — Deployment & Operations** | Prerequisites: Chapters 5, 6 | Difficulty: Intermediate
+
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- Your JS bundle is readable and your app binary is decompilable; assume everything shipped in the client is public and never embed secret API keys in JS code
+- Use `expo-secure-store` (or `react-native-keychain`) for tokens and credentials, MMKV for non-sensitive persistent data, and never store anything sensitive in AsyncStorage
+- Implement OAuth2 with PKCE for authentication; store tokens securely, refresh automatically via API client interceptors, and handle token races with a mutex
+- Certificate pinning prevents MITM attacks but adds maintenance burden; pin the intermediate CA, not the leaf certificate, and have a remote-config escape hatch
+- Review the OWASP Mobile Top 10 against your app; the most common React Native vulnerabilities are insecure data storage, insufficient transport security, and hardcoded secrets
+
+</details>
 
 Here is the uncomfortable truth that most React Native tutorials skip entirely: **your app is not secure by default.** Your JavaScript bundle is readable. Your app binary is decompilable. Every API key you embed in your code is extractable. Every piece of data you store in AsyncStorage is sitting in plain text on the filesystem. Every network request can be intercepted by anyone with a proxy tool.
 

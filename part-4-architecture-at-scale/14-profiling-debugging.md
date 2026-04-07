@@ -1,5 +1,5 @@
 <!--
-  CHAPTER: 14
+  CHAPTER: 15
   TITLE: Profiling & Debugging
   PART: IV — Architecture at Scale
   PREREQS: Chapters 1, 13
@@ -11,6 +11,17 @@
 # Chapter 14: Profiling & Debugging
 
 > **Part IV — Architecture at Scale** | Prerequisites: Chapters 1, 13 | Difficulty: Intermediate to Advanced
+
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- The first step in debugging is identifying which layer the problem is in: React components, JS engine, JSI/bridge, native UI, or OS/hardware; each layer has its own profiler
+- Hermes CPU profiling shows you exactly which JS functions are blocking the thread; use it for scroll jank, slow computations, and GC pressure
+- Android Studio Profiler and Xcode Instruments give you native-layer visibility (memory, CPU, energy, network) that no JS tool can provide
+- Memory leaks in React Native usually come from uncleared timers, event listeners, or Reanimated shared values; use Hermes heap snapshots to find retained objects
+- Native crashes (SIGABRT, SIGSEGV) require symbolicated stack traces; configure dSYM upload for iOS and ProGuard mapping for Android in your CI pipeline
+
+</details>
 
 There's a moment in every React Native developer's career — usually at 2 AM, usually the night before a release — when something goes wrong and `console.log` is not going to cut it. The app is crashing on Android but not iOS. Or there's a memory leak that only manifests after 15 minutes of use. Or the animations are dropping frames on a Samsung Galaxy A13 but running smoothly on your iPhone 15. Or, the worst of all, you're getting a native crash with a stack trace full of symbols you don't recognize — `SIGABRT`, `SIGSEGV`, something in `libc++abi.dylib`.
 

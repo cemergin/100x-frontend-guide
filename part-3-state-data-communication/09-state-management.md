@@ -1,5 +1,5 @@
 <!--
-  CHAPTER: 9
+  CHAPTER: 10
   TITLE: State Management at Scale
   PART: III — State, Data & Communication
   PREREQS: Chapter 1, 3
@@ -11,6 +11,17 @@
 # Chapter 9: State Management at Scale
 
 > **Part III — State, Data & Communication** | Prerequisites: Chapters 1, 3 | Difficulty: Intermediate to Advanced
+
+<details>
+<summary><strong>TL;DR</strong></summary>
+
+- Split state into three categories: server state (TanStack Query), client state (Zustand), and form state (React Hook Form + Zod); mixing them in one store is the root cause of most "state management is hard" complaints
+- TanStack Query owns everything that comes from your API -- loading states, caching, background refetch, optimistic updates; stop putting API data in Redux or Context
+- Zustand is the default for client state: tiny API, no boilerplate, works outside React, and selectors prevent unnecessary re-renders
+- React Hook Form + Zod gives you performant forms with runtime validation and compile-time type safety; never use controlled inputs for complex forms
+- Finite state machines (XState Store) eliminate impossible states; use them for complex flows like checkout, onboarding, or multi-step wizards
+
+</details>
 
 Let's start with the controversial truth that will save you months of pain: **you probably have a state management problem, but it's not the one you think it is.**
 
